@@ -285,7 +285,6 @@ module load gatk/3.7
 java -jar /usr/local/gatk/3.7/bin/GenomeAnalysisTK.jar \ -R Caki_genome.fa \ -T SelectVariants \ -V GBSCAK_filtered_lowInd.recode.vcf \ -o GBSCAK_filtered_lowInd.snps.vcf \ -restrictAllelesTo BIALLELIC \ -selectType SNP \ --setFilteredGtToNocall \ -log selectvariants.log
 
 ##########################################
-
 #remove certain Individuals for double sequencing
 vcftools --vcf GBSCAK_filtered_lowInd.snps.vcf --remove double --recode --recode-INFO-all --out GBSCAK_filtered_lowInd_nodouble2
 #get heterozygosity and filter those out
@@ -310,9 +309,9 @@ vcftools --vcf GBSCAK_9_3_20_noUN_nohet.vcf --thin 1000 --recode --recode-INFO-a
 java -jar PGDSpider_2.1.0.3/PGDSpider2-cli.jar -inputfile GBSCAK_9_3_20_noUN_nohet_1000.recode.vcf -inputformat VCF -outputfile GBSCAK_9_3_20_noUN_nohet_1000.snps.str -outputformat STRUCTURE -spid VCF_to_Structure_Cakile.spid
 
 ##########################################################################################
-#***********************************#
-#*fixed differences between E and M*#
-#***********************************#
+#*******************************************************#
+#*fixed differences between C. edentula and C. maritima*#
+#*******************************************************#
 #get fixed differences between species for Newhybrids and HIest
 #make two text files with only European (Pop_M) individuals and only eastern North American (Pop_E) individuals
 #get Fst
@@ -357,9 +356,9 @@ paste names4 data4 > analysis_Home_tree012NAnames.012
 
 #create tree as above
 ##########################################################################################
-#******************#
-#*E home run*#
-#******************#
+#**********************************#
+#*C. edentula native range dataset*#
+#**********************************#
 #use that file GBSCAK_9_3_20_noUN_nohet to find edentula polymorphic snps
 #first need a file with only edentula individuals from the home range
 vcftools --vcf GBSCAK_9_3_20_noUN_nohet.recode.vcf --keep E_Home_Ind --recode --recode-INFO-all --out Edentula_GBSCAK_9_3_20_noUN_nohet
