@@ -1,11 +1,3 @@
-Attach also 
--GBS_fastq_Demultiplexer_v9_2Enzyme2barcode.pl
--CP1aCP2.txt and CP3aCP4.txt
--FQ_pair_no.pl
-
-
-Steps 1-7 BWA Aligner
-
 Step 1) 
 -download all of the data Cakile 1 & Cakile 2 and Cakile 3 & Cakile 4 and put on shared folder, unzip the files (all row data)
 -prepare barcode files, sample name and enzyme sequence and barcode sequence= CP1aCP2.txt and CP3aCP4.txt
