@@ -1,0 +1,608 @@
+Attach also 
+-GBS_fastq_Demultiplexer_v9_2Enzyme2barcode.pl
+-CP1aCP2.txt and CP3aCP4.txt
+-FQ_pair_no.pl
+
+
+Steps 1-7 BWA Aligner
+
+Step 1) 
+-download all of the data Cakile 1 & Cakile 2 and Cakile 3 & Cakile 4 and put on shared folder, unzip the files (all row data)
+-prepare barcode files, sample name and enzyme sequence and barcode sequence= CP1aCP2.txt and CP3aCP4.txt
+-create paired*.lists from output from last step 
+For clean job: ls gbs_cak*_R1.fastq | sed 's/_R1.fastq//g' > paired.list
+For bwa job: ls paired_gbs_cak*_R1.fastq | sed 's/_R1.fastq//g' > paired2.list
+For picard job: ls out_bwapaired_gbs_cak*.sort.bam > paired3.list
+For haplotype job: ls out_bwapaired_gbs_cak*.rg.clean.bam > paired4.list
+
+Reference genome:
+-create fa.fai files using:
+samtools faidx Caki_genome.fa
+
+-create a .dic file using
+java -jar /usr/local/picard/2.9.2/picard.jar CreateSequenceDictionary   REFERENCE=Caki_genome.fa OUTPUT=Caki_genome.dict
+
+########################################################################
+Step 2) Demultiplex
+
+#!/bin/bash
+#SBATCH --ntasks=24
+#SBATCH --mem=200G
+#SBATCH --account=om62
+#SBATCH --tim	e=96:00:00
+
+cd ddGBS-Cakile
+
+perl scripts/GBS_fastq_Demultiplexer_v9_2Enzyme2barcode.pl CP1aCP2.txt GBS-Raw/HI.4286.008.pool_Cakile_1_Cakile_2_R1.fastq GBS-Raw/HI.4286.008.pool_Cakile_1_Cakile_2_R2.fastq gbs
+
+perl scripts/GBS_fastq_Demultiplexer_v9_2Enzyme2barcode.pl CP3aCP4.txt GBS-Raw/HI.4307.001.pool_Cakile_3_Cakile_4_R1.fastq GBS-Raw/HI.4307.001.pool_Cakile_3_Cakile_4_R2.fastq gbs
+
+########################################################################
+Step 3) clean up job (clean.job.v2)
+
+ls gbs_cak*_R1.fastq | sed 's/_R1.fastq//g' > paired.list
+
+#create out path
+mkdir out_dir
+
+#!/bin/bash
+### keep yours files together in the same directory
+### descriptive name of job, avoid spaces
+#SBATCH --job-name=clean.job
+### walltime hh:mm:ss per subjob
+#SBATCH --time=0-00:30:00
+### memory requirements
+#SBATCH --mem-per-cpu=4000
+### throw all output (stdout and stderr) to one file
+#SBATCH --output=clean.job-%j.out
+#SBATCH --error=clean.job-%j.err
+### array job
+#SBATCH --array=1-384%20
+#SBATCH --partition=short
+
+echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
+DATA=`head -n $SLURM_ARRAY_TASK_ID paired.list | tail -1`
+
+module load fastx-toolkit/0.0.13
+
+cd ddGBS-Cakile
+
+fastq_quality_trimmer -t 20 -l 20 -Q 33 -i ${DATA}_R1.fastq -v -o ${DATA}_t_R1.fastq > ${DATA}.log 2>&1
+fastq_quality_trimmer -t 20 -l 20 -Q 33 -i ${DATA}_R2.fastq -v -o ${DATA}_t_R2.fastq >> ${DATA}.log 2>&1
+
+#run fastq filter
+fastq_quality_filter -q 20 -p 90 -Q 33 -v -i ${DATA}_t_R1.fastq -o ${DATA}_t2_R1.fastq >> ${DATA}.log 2>&1
+fastq_quality_filter -q 20 -p 90 -Q 33 -v -i ${DATA}_t_R2.fastq -o ${DATA}_t2_R2.fastq >> ${DATA}.log 2>&1
+
+#delete trimmed file
+rm -vf ${DATA}_t_R1.fastq
+rm -vf ${DATA}_t_R2.fastq
+
+perl scripts/FQ_pair_no.pl ${DATA}_t2_R1.fastq ${DATA}_t2_R2.fastq >> $DATA}.log 2>&1
+
+mv paired_${DATA}_t2_R1.fastq paired_${DATA}_R1.fastq
+mv paired_${DATA}_t2_R2.fastq paired_${DATA}_R2.fastq
+
+#delete filtered file
+rm -vf ${DATA}_t2_R1.fastq
+rm -vf ${DATA}_t2_R2.fastq
+
+echo "$SLURM_ARRAY_TASK_ID"
+########################################################################
+4)bwa.job (bwa.job2)
+
+#!/bin/bash
+### keep yours files together in the same directory
+### descriptive name of job, avoid spaces
+#SBATCH --job-name=bwa.job2
+### walltime hh:mm:ss per subjob
+#SBATCH --time=0-00:30:00
+### memory requirements
+#SBATCH --mem-per-cpu=5000
+### throw all output (stdout and stderr) to one file
+#SBATCH --output=bwa.job-%j.out
+#SBATCH --error=bwa.job-%j.err
+### array job
+#SBATCH --array=1-384%10
+#SBATCH --partition=short
+
+cd paired-fastq
+
+echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
+DATA=`head -n $SLURM_ARRAY_TASK_ID paired2.list | tail -1`
+
+module load bwa/0.7.12
+module load samtools/1.7
+
+REF=Caki_genome.fa
+SAM_INDEX=Caki_genome.fa.fai
+OUT_PATH=out_bwa2
+
+#bwa index -a bwtsw $REF
+
+bwa mem -t 2 $REF ${DATA}_R1.fastq ${DATA}_R2.fastq | samtools view -bh | samtools sort > $OUT_PATH${DATA}.sort.bam
+
+samtools index $OUT_PATH${DATA}.sort.bam $OUT_PATH${DATA}.sort.bam.bai
+
+
+echo "$SLURM_ARRAY_TASK_ID"
+
+
+########################################################################
+
+5) picard.job
+
+#!/bin/bash
+### keep yours files together in the same directory
+### descriptive name of job, avoid spaces
+#SBATCH --job-name=picard.job
+### walltime hh:mm:ss per subjob
+#$SBATCH --time=00:30:00
+### memory requirements
+#SBATCH --mem-per-cpu=5000
+### throw all output (stdout and stderr) to one file
+#SBATCH --output=picard.job-%j.out
+#SBATCH --error=picard.job-%j.err
+### array job
+#SBATCH --array=1-384%10
+#SBATCH --partition=com
+
+cd outbwa2
+
+echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
+DATA=`head -n $SLURM_ARRAY_TASK_ID paired3.list | tail -1 | awk -F"." '{print $1}'`
+
+module load picard/2.9.2
+module load samtools/1.7
+
+REF=Caki_genome.fa
+SAM_INDEX=Caki_genome.fa.fai 
+OUT_PATH=outbwa2/
+
+#create read groups
+RUN=run_1
+LIB=plate_1_4
+SAMPLE=$(echo ${DATA} | awk -F"_" '{print $4}' | awk -F"." '{print $1}')
+
+echo $RUN $LIB $SAMPLE $DATA $OUT_PATH
+
+java -jar /usr/local/picard/2.9.2/picard.jar AddOrReplaceReadGroups I=${DATA}.sort.bam  O=$OUT_PATH/${DATA}.rg.bam  LB=$LIB  PL=illumina  PU=$RUN  SM=$SAMPLE  VALIDATION_STRINGENCY=SILENT
+java -jar /usr/local/picard/2.9.2/picard.jar CleanSam  I=$OUT_PATH/${DATA}.rg.bam  O=$OUT_PATH/${DATA}.rg.clean.bam  VALIDATION_STRINGENCY=LENIENT
+/usr/local/samtools/1.7/bin/samtools index $OUT_PATH/${DATA}.rg.clean.bam
+echo "$SLURM_ARRAY_TASK_ID"
+
+########################################################################
+
+6) Haplotype job
+#!/bin/bash
+### keep yours files together in the same directory
+### descriptive name of job, avoid spaces
+#SBATCH --job-name=haplotype.job
+### walltime hh:mm:ss per subjob
+#SBATCH --time=06:00:00
+### memory requirements
+#SBATCH --mem-per-cpu=10G
+### throw all output (stdout and stderr) to one file
+#SBATCH --output=haplotype.job-%j.out
+#SBATCH --error=haplotype.job-%j.err
+### array job
+#SBATCH --array=1-384%5
+#SBATCH --partition=com
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+
+cd outpicard
+
+echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
+DATA=`head -n $SLURM_ARRAY_TASK_ID paired4.list | tail -1 |  awk -F"." '{print $1}'`
+echo "Job ID: $SLURM_JOB_ID"
+echo "Node list: $SLURM_JOB_NODELIST"
+echo "Job num nodes: $SLURM_JOB_NUM_NODES"
+echo "CPUs on node: $SLURM_CPUS_ON_NODE"
+echo "Ntasks: $SLURM_NTASKS"
+
+module load gatk/3.7
+
+REF=Caki_genome.fa
+OUT_PATH=outpicard/
+
+
+###run haplotype caller on each individual
+java -Xss2m -Xmx9g -jar /usr/local/gatk/3.7/bin/GenomeAnalysisTK.jar -R $REF -T HaplotypeCaller -I $OUT_PATH/${DATA}.rg.clean.bam  --emitRefConfidence GVCF -o $OUT_PATH/${DATA}.g.vcf
+echo "$SLURM_ARRAY_TASK_ID"
+
+########################################################################
+7) filter SNPs
+
+7.1) 
+
+ls out_bwapaired_gbs_cak*g.vcf.idx | sed 's/.idx//g' > GBSCAK_gvcf.list
+
+
+7.2)
+
+#!/bin/bash
+### keep yours files together in the same directory
+### descriptive name of job, avoid spaces
+#SBATCH --job-name=STEP2SNP
+### walltime hh:mm:ss per subjob
+#SBATCH --time=40:00:00
+### memory requirements
+#SBATCH --mem-per-cpu=50G
+### throw all output (stdout and stderr) to one file
+#SBATCH --output=2STEP2SNP-%j.out
+#SBATCH --error=2STEP2SNP-%j.err
+### array job
+#SBATCH --array=1-384
+#SBATCH --partition=com
+#SBATCH --partition=com
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=1
+
+cd outputhaplotyp/
+
+module load gatk/3.7
+
+hostname
+time java -XX:MaxHeapSize=512m -Xmx30G -jar /usr/local/gatk/3.7/bin/GenomeAnalysisTK.jar \ -T GenotypeGVCFs \ -R Caki_genome.fa \ -disable_auto_index_creation_and_locking_when_reading_rods \ -V GBSCAK_gvcf.list \ -o GBSCAK.vcf \ -hets 0.01 \ --max_alternate_alleles 4
+
+###output is unfiltered dataset
+
+7.3) 
+#1 remove samples with less than ~25 000 reads
+#make a list of Individuals with less than 25 000 reads
+vcftools --vcf GBSCAK.vcf  --remove dismiss_list_not_enough_raw_reads.list --recode --recode-INFO-all --out GBSCAK_goodreads
+#2 remove indels
+vcftools --vcf GBSCAK_goodreads.vcf --remove-indels --recode --recode-INFO-all --out GBSCAK_goodreads_noindel
+#3 Genotype depth between 5 and 100000
+vcftools --vcf GBSCAK_goodreads_noindel.vcf --minDP 5 --maxDP 100000 --recode --recode-INFO-all --out GBSCAK_goodreads_noindel_MinMaxDP
+#4  min quality score of -Q score ≥ 20 (minQ),minor allele frequency  maf 0.05
+vcftools --vcf GBSCAK_goodreads_noindel_MinMaxDP.vcf --maf 0.05 --minQ 20 --recode --recode-INFO-all --out  GBSCAK_goodreads_noindel_MinMaxDP_maf_min
+#5 genotype GT_QUAL > 20
+vcftools --vcf GBSCAK_goodreads_noindel_MinMaxDP_maf_min.vcf --minGQ 20 --recode --recode-INFO-all --out  GBSCAK_goodreads_noindel_MinMaxDP_maf_min_GT   
+#6 missing data
+vcftools --vcf GBSCAK_goodreads_noindel_MinMaxDP_maf_min_GT.vcf --max-missing 0.5 --recode --recode-INFO-all --out GBSCAK_goodreads_noindel_MinMaxDP_maf_min_GT_50
+#per Ind
+vcftools --vcf GBSCAK_goodreads_noindel_MinMaxDP_maf_min_GT_50.vcf --missing-indv
+#make a list of named lowDP
+awk '$5 > 0.5' out.imiss | cut -f1 > lowDP.indv
+
+vcftools --vcf GBSCAK_goodreads_noindel_MinMaxDP_maf_min_GT_50.vcf --remove lowDP.indv --recode --recode-INFO-all --out GBSCAK_filtered_lowInd
+        
+#select only biallelic SNPs
+
+#!/bin/bash
+### keep yours files together in the same directory
+### descriptive name of job, avoid spaces
+#SBATCH --job-name=STEP4SNP
+### walltime hh:mm:ss per subjob
+#SBATCH --time=00:30:00
+### memory requirements
+#SBATCH --mem-per-cpu=20G
+### throw all output (stdout and stderr) to one file
+#SBATCH --output=STEP4SNP-%j.out
+#SBATCH --error=STEP4SNP-%j.err
+#SBATCH --cpus-per-task=4
+
+cd compare_aligner/bwa
+
+module load gatk/3.7
+
+java -jar /usr/local/gatk/3.7/bin/GenomeAnalysisTK.jar \ -R Caki_genome.fa \ -T SelectVariants \ -V GBSCAK_filtered_lowInd.recode.vcf \ -o GBSCAK_filtered_lowInd.snps.vcf \ -restrictAllelesTo BIALLELIC \ -selectType SNP \ --setFilteredGtToNocall \ -log selectvariants.log
+
+##########################################
+
+#remove certain Individuals for double sequencing
+vcftools --vcf GBSCAK_filtered_lowInd.snps.vcf --remove double --recode --recode-INFO-all --out GBSCAK_filtered_lowInd_nodouble2
+#get heterozygosity and filter those out
+vcftools --vcf GBSCAK_filtered_lowInd_nodouble2.snps.vcf  --hardy --out GBS_all_9_3_20_hardy
+
+cat GBS_all_9_3_20_hardy.hwe | awk '{print $1,$2,$3}'| sed "s+/+\t+g" | awk '($3+$4+$5)!=0{print $1, $2, $3, $4, $5, $4/($3+$4+$5)}'| awk '$6 > 0.8 {print $0}' > over80_all_9_3_20.txt
+
+cat over80_all_9_3_20.txt | awk '{print $1,$2}' > filter_het_80_9_3_20.txt
+#remove certain Individuals for uncertain origin
+vcftools --vcf GBSCAK_filtered_lowInd_nodouble2.snps.vcf --remove UN_In --recode --recode-INFO-all --out GBSCAK_9_3_20_noUN
+
+vcftools --vcf  GBSCAK_9_3_20_noUN.vcf --exclude-positions filter_het_80_9_3_20.txt --recode --recode-INFO-all --out GBSCAK_9_3_20_noUN_nohet
+
+#output is filtered dataset
+
+#thin for 1000
+vcftools --vcf GBSCAK_9_3_20_noUN_nohet.vcf --thin 1000 --recode --recode-INFO-all --out GBSCAK_9_3_20_noUN_nohet_1000
+
+#ouput is global thinned dataset
+
+#convert to structure with PGDSpider and run fastStructure
+java -jar PGDSpider_2.1.0.3/PGDSpider2-cli.jar -inputfile GBSCAK_9_3_20_noUN_nohet_1000.recode.vcf -inputformat VCF -outputfile GBSCAK_9_3_20_noUN_nohet_1000.snps.str -outputformat STRUCTURE -spid VCF_to_Structure_Cakile.spid
+
+##########################################################################################
+#***********************************#
+#*fixed differences between E and M*#
+#***********************************#
+#get fixed differences between species for Newhybrids and HIest
+#make two text files with only European (Pop_M) individuals and only eastern North American (Pop_E) individuals
+#get Fst
+vcftools --vcf GBSCAK_9_3_20_noUN_nohet_1000.vcf --weir-fst-pop Pop_E.txt --weir-fst-pop Pop_M.txt --out Pop_E_vs_Pop_M
+#take only the one with Fst=1
+
+awk '{ if($3 ==1) { print }}' Pop_E_vs_Pop_M.weir.fst > fixed_diff_9_3_fst1.txt
+
+awk '{print $1,$2}' fixed_diff_9_3_fst1.txt > filter_10_3_20.txt
+
+vcftools --vcf GBSCAK_9_3_20_noUN_nohet_1000.vcf vcftools --positions filter_10_3_20.txt --recode --recode-INFO-all --out fixed_diff
+##########################################################################################
+#******************#
+#*make Splitstrees*#
+#******************#
+
+#global tree
+#then filter for and convert
+vcftools --vcf GBSCAK.vcf --minGQ 20 --max-missing 1 --mac 2 --012 --out tree_analysis_GBSCAK012
+#replace -1
+cat tree_analysis_GBSCAK012.012 | sed 's/-1/?/g' > tree_analysis_GBSCAK012.012NA.012
+
+#add names
+cat tree_analysis_GBSCAK012.012.indv | sed 's/.d.bam//g' > names
+cat tree_analysis_GBSCAK012.012NA.012 | cut --complement -f1 > data
+paste names data > tree_analysis_GBSCAK012.012NAnames.012
+#Files are tab-separated text files, so in Mesquite do:
+File->Open File-> choose file:tree_analysis_GBSCAK012.012NAnames.012 -> Simple (Categorical Data) -> name the file:global_splitstree
+
+#export as simplified nexus file
+#Open in Splitstree File->Open
+#generate network by selecting Networks->NeighbourNet
+
+#native range tree
+#create text file with only native range Individuals
+vcftools --vcf GBSCAK.vcf --keep Home --recode --recode-INFO-all --out Home_tree
+vcftools --vcf Home_tree.vcf --minGQ 20 --max-missing 1 --mac 2 --012 --out analysis_Home_tree012
+cat analysis_Home_tree012.012 | sed 's/-1/?/g' > analysis_Home_tree012012NA.012
+cat analysis_Home_tree012.012.indv | sed 's/.d.bam//g' > names4
+cat analysis_Home_tree012012NA.012 | cut --complement -f1 > data4
+paste names4 data4 > analysis_Home_tree012NAnames.012
+
+#create tree as above
+##########################################################################################
+#******************#
+#*E home run*#
+#******************#
+#use that file GBSCAK_9_3_20_noUN_nohet to find edentula polymorphic snps
+#first need a file with only edentula individuals from the home range
+vcftools --vcf GBSCAK_9_3_20_noUN_nohet.recode.vcf --keep E_Home_Ind --recode --recode-INFO-all --out Edentula_GBSCAK_9_3_20_noUN_nohet
+
+#then allele frequency
+vcftools --vcf Edentula_GBSCAK_9_3_20_noUN_nohet.vcf --freq2 --out correct_E_ploy
+
+awk '$6 > 0' correct_E_ploy.frq | awk '$6 < 1' | cut -f1-2 > correc_polymorphicEdentula
+
+#filter for those --positions 
+vcftools --vcf Edentula_GBSCAK_9_3_20_noUN_nohet.vcf --positions correc_polymorphicEdentula --recode --recode-INFO-all --out correct_E_poly_H0me 
+
+#thin for 1000 
+vcftools --vcf correct_E_poly_H0me.vcf --thin 1000 --recode --recode-INFO-all --out Edentula_GBSCAK_9_3_20_noUN_nohet_1000
+
+#output is the C. edentula native range dataset
+#convert to structure and run fastStructure
+##########################################################################################
+#**********************************#
+#*C. edentula global dataset*#
+#**********************************#
+#use the filter above on all Individuals
+
+vcftools --vcf GBSCAK_9_3_20_noUN_nohet.vcf --positions correc_polymorphicEdentula --recode --recode-INFO-all --out 705_E_spec_all
+#output is the C. edentula global dataset
+#convert to structure and run fastStructure
+##########################################################################################
+#**********************************#
+#*C. maritima native range dataset*#
+#**********************************#
+#make a vcf file only containing Europe samples 
+vcftools --vcf GBSCAK_9_3_20_noUN_nohet.vcf --keep Europe_samples --recode --recode-INFO-all --out Europe_1_4_20
+
+#then allele frequency
+vcftools --vcf Europe_1_4_20.vcf --freq2 --out M_ploy
+
+awk '$6 > 0'  M_ploy.frq | awk '$6 < 1' | cut -f1-2 > polymorphicMartitima
+
+#filter for those --positions 
+vcftools --vcf Europe_1_4_20.vcf --positions polymorphicMartitima --recode --recode-INFO-all --out M_home_poly_Europe
+
+#thin for 1000 
+vcftools --vcf M_home_poly_Europe.vcf --thin 1000 --recode --recode-INFO-all --out Maritima_GBSCAK_1_4_20_noUN_nohet_1000
+
+#output is the C. maritima native range dataset
+#convert to structure and run fastStructure
+
+
+##########################################################################################
+#**********************************#
+#*Nextgenmap alignment*#
+#**********************************#
+4_B) Nextgen.job
+#!/bin/bash
+### keep yours files together in the same directory
+### descriptive name of job, avoid spaces
+#SBATCH --job-name=nextgenmap
+### walltime hh:mm:ss per subjob
+#$SBATCH --time=06:00:00
+### memory requirements
+#SBATCH --mem-per-cpu=20000
+### throw all output (stdout and stderr) to one file
+#SBATCH --output=nextgenmap_test.job-%A-%a.out
+#SBATCH --error=nextgenmap_test.job-%A-%a.err
+### array job
+#SBATCH --array=1-384
+
+cd /home/hros0002/om62/ddGBS-Cakile/paired-fastq
+
+echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
+DATA=`head -n $SLURM_ARRAY_TASK_ID paired2.list | tail -1`
+
+
+module load nextgenmap/0.5.5
+module load samtools/1.9-gcc5
+
+
+REF=Caki_genome_ngm.fa
+SAM_INDEX=Caki_genome.fa.fai
+OUT_PATH=NextGenMap_alignment/
+
+echo "ngm -r Caki_genome_ngm.fa -1 ${DATA}_R1.fastq -2 ${DATA}_R2.fastq -o $OUT_PATH${DATA}.sam -t 2 | samtools view -S -b -h | samtools sort > $OUT_PATH${DATA}.sort.bam"
+
+ngm -r Caki_genome_ngm.fa -1 ${DATA}_R1.fastq -2 ${DATA}_R2.fastq -o $OUT_PATH${DATA}.sam -t 2 | samtools view -S -b -h | samtools sort > $OUT_PATH${DATA}.sort.bam
+
+echo "$SLURM_ARRAY_TASK_ID"
+
+
+4_BB) convert
+#convert to bam files
+#!/bin/bash
+### keep yours files together in the same directory
+### descriptive name of job, avoid spaces
+#SBATCH --job-name=test_bam_convert.job
+### walltime hh:mm:ss per subjob
+#$SBATCH --time=00:30:00
+### memory requirements
+#SBATCH --mem-per-cpu=5000
+### throw all output (stdout and stderr) to one file
+#SBATCH --output=test_bam_convert.job-%A-%a.out
+#SBATCH --error=test_bam_convert.job-%A-%a.err
+### array job
+#SBATCH --array=1-384%10
+#SBATCH --partition=short
+
+cd /home/hros0002/om62/ddGBS-Cakile/NextGenMap_alignment/Nextgen_align_output
+
+echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
+DATA=`head -n $SLURM_ARRAY_TASK_ID paired_bam.list | tail -1`
+
+module load samtools/1.9-gcc5
+
+REF=Caki_genome.fa
+SAM_INDEX=Caki_genome.fa.fai
+
+samtools view -S -b -h ${DATA}.sam > ${DATA}.bam
+
+samtools sort ${DATA}.bam -o ${DATA}.sort.bam
+
+samtools index ${DATA}.sort.bam ${DATA}.sort.bam.bai
+
+5_B)picard job
+#!/bin/bash
+### keep yours files together in the same directory
+### descriptive name of job, avoid spaces
+#SBATCH --job-name=picard_nextGen.job
+### walltime hh:mm:ss per subjob
+#$SBATCH --time=00:30:00
+### memory requirements
+#SBATCH --mem-per-cpu=5000
+### throw all output (stdout and stderr) to one file
+#SBATCH --output=picard_nextGen.job-%A-%a.out
+#SBATCH --error=picard_nextGen.job-%A-%a.err
+### array job
+#SBATCH --array=1-384%10
+#SBATCH --partition=com
+
+cd Nextgen_align_output/bam_files
+
+echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
+DATA=`head -n $SLURM_ARRAY_TASK_ID paired3.list | tail -1`
+
+module load picard/2.9.2
+module load samtools/1.9-gcc5
+
+REF=Caki_genome.fa
+SAM_INDEX=Caki_genome.fa.fai
+OUT_PATH=picard_job_next_gen/
+
+#create read groups
+RUN=run_1
+LIB=plate_1_4
+SAMPLE=$(echo ${DATA} | awk -F"_" '{print $4}' | awk -F"." '{print $1}')
+
+echo $RUN $LIB $SAMPLE $DATA $OUT_PATH
+
+java -jar /usr/local/picard/2.9.2/picard.jar AddOrReplaceReadGroups I=${DATA}.sort.bam  O=$OUT_PATH/${DATA}.rg.bam  LB=$LIB  PL=illumina  PU=$RUN  SM=$SAMPLE  VALIDATION_STRINGENCY=SILENT
+java -jar /usr/local/picard/2.9.2/picard.jar CleanSam  I=$OUT_PATH/${DATA}.rg.bam  O=$OUT_PATH/${DATA}.rg.clean.bam  VALIDATION_STRINGENCY=LENIENT
+/usr/local/samtools/1.7/bin/samtools index $OUT_PATH/${DATA}.rg.clean.bam
+echo "$SLURM_ARRAY_TASK_ID"
+
+6_B) haplotype job ( on scaffolds)
+#make a scaffold list, make a job list from the scaffold list 
+#run this job on all scaffolds and change the input according to the job list
+
+#!/bin/bash
+#SBATCH --job-name=db.job
+###walltime hh:mm:ss per subjob
+#SBATCH --time=0-00:20:00
+###memory requirements
+#SBATCH --mem-per-cpu=30G
+###throw all output (stdout and stderr) to one file
+#SBATCH --output=db.job-%j.out
+#SBATCH --error=db.job-%j.err
+###array job
+#SBATCH --array=1-384%20
+#SBATCH --partition=short
+
+echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
+DATA=`head -n $SLURM_ARRAY_TASK_ID xab  | tail -1`
+
+##use new gatk
+module load gatk/4.1.2.0
+gatk --java-options "-Xmx30g -Xms30g" \
+       GenomicsDBImport \
+       --genomicsdb-workspace-path db/$DATA \
+       --batch-size 50 \
+       -L $DATA \
+       --sample-name-map sample_map.txt \
+       --reader-threads 3
+
+gatk --java-options "-Xmx30g" GenotypeGVCFs \
+   -R Caki_genome.fa \
+   -V gendb://db/$DATA \
+   -O vcf/$DATA.vcf.gz
+
+7_B)#filter as bwa to get comparison
+#1 remove samples with less than 25000 reads
+vcftools --vcf full_genome.vcf  --remove dismiss_2.txt --recode --recode-INFO-all --out fullG_goodreads.vcf
+#2 remove indells
+vcftools --vcf fullG_goodreads.vcf --remove-indels --recode --recode-INFO-all --out fullG_goodreads_noindel
+#3 Genotype depth between 5 and 100000
+vcftools --vcf fullG_goodreads_noindel.vcf --minDP 5 --maxDP 100000 --recode --recode-INFO-all --out fullG_goodreads_noindel_MinMaxDP
+#4  min quality score of -Q score ≥ 20 (minQ), minor allele frequency  maf 0.05
+vcftools --vcf fullG_goodreads_noindel_MinMaxDP.vcf --maf 0.05 --minQ 20 --recode --recode-INFO-all --out  fullG_goodreads_noindel_MinMaxDP_maf
+#5Genotype quality
+vcftools --vcf fullG_goodreads_noindel_MinMaxDP_maf.vcf --minGQ 20 --recode --recode-INFO-all --out  fullG_goodreads_noindel_MinMaxDP_maf_GQ
+#6 missing data
+vcftools --vcf fullG_sort_goodreads_noindel_MinMaxDP_maf_GQ.vcf --max-missing 0.5 --recode --recode-INFO-all --out fullG_sort_goodreads_noindel_MinMaxDP_maf_GQ_mis50.vcf
+#per Ind
+vcftools --vcf fullG_sort_goodreads_noindel_MinMaxDP_maf_GQ_mis50.vcf --missing-indv
+awk '$5 > 0.5' out.imiss  | cut -f1 > lowDP_Scaf.indv
+vcftools --vcf fullG_sort_goodreads_noindel_MinMaxDP_maf_GQ_mis50.vcf --remove lowDP_Scaf.indv --recode --recode-INFO-all --out fullG_filtered_lowInd
+
+#restrict to biallelic SNPS as BWA file 
+####################################################################################
+#********************#
+#*aligner comparison*#
+#********************#
+#missing per individual for aligner comparison
+vcftools --vcf fullG_filtered_lowInd.snps.vcf --missing-indv --out 5_4__20_missing_filtere_nextG
+vcftools --vcf fulG_sort_goodreads.vcf --missing-indv --out 5_4__20_missing_unfiltere_nextG
+vcftools --vcf GBSCAK.vcf --missing-indv --out 5_4_20_missing_unfiltered
+vcftools --vcf GBSCAK_filtered_lowInd.snps.vcf --missing-indv --out 5_4_20_missing_filtered
+
+#reads aligned for each aligner run that on the bam files
+for i in *.bam
+do
+echo $i High_quality_MAPPED >> OUTPUT.TXT
+samtools view -F4 $i | awk '$5 >= 20 {print $0}' | wc -l >> OUTPUT.TXT
+echo $i High_quality_UNMAPPED >> OUTPUT.TXT
+samtools view -f4 $i | awk '$5 >= 20 {print $0}' | wc -l >> OUTPUT.TXT
+echo $i Low_quality_MAPPED >> OUTPUT.TXT
+samtools view -F4 $i | awk '$5 < 20 {print $0}' | wc -l >> OUTPUT.TXT
+echo $i Low_quality_UNMAPPED >> OUTPUT.TXT
+samtools view -f4 $i | awk '$5 < 20 {print $0}' | wc -l >> OUTPUT.TXT
+done
+#in excel calcuate percentage which is the input for R
