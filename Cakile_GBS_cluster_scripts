@@ -464,7 +464,7 @@ echo "$SLURM_ARRAY_TASK_ID"
 #SBATCH --array=1-384%10
 #SBATCH --partition=short
 
-cd /home/hros0002/om62/ddGBS-Cakile/NextGenMap_alignment/Nextgen_align_output
+cd Nextgen_align_output
 
 echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
 DATA=`head -n $SLURM_ARRAY_TASK_ID paired_bam.list | tail -1`
@@ -520,7 +520,7 @@ java -jar /usr/local/picard/2.9.2/picard.jar CleanSam  I=$OUT_PATH/${DATA}.rg.ba
 /usr/local/samtools/1.7/bin/samtools index $OUT_PATH/${DATA}.rg.clean.bam
 echo "$SLURM_ARRAY_TASK_ID"
 
-6_B) haplotype job ( on scaffolds)
+6_B) haplotype job
 #make a scaffold list, make a job list from the scaffold list 
 #run this job on all scaffolds and change the input according to the job list
 
@@ -555,7 +555,7 @@ gatk --java-options "-Xmx30g" GenotypeGVCFs \
    -V gendb://db/$DATA \
    -O vcf/$DATA.vcf.gz
 
-7_B)#filter as bwa to get comparison
+7_B)#filter same as bwa to get comparison
 #1 remove samples with less than 25000 reads
 vcftools --vcf full_genome.vcf  --remove dismiss_2.txt --recode --recode-INFO-all --out fullG_goodreads.vcf
 #2 remove indells
