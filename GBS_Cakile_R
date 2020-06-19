@@ -714,6 +714,7 @@ random_SNP <- sample_n(Allfixeddiff ,300)
 write.table(random_SNP, "random_SNP_10_3_29.txt", append = FALSE, sep = "\t", dec = ".",
             row.names = FALSE, col.names = FALSE, quote = FALSE)
 
+#filter vcf file so that only those SNPs are left
 #run Newhybrids outside of R in terminal
 
 ############################################################################################################
@@ -721,7 +722,7 @@ write.table(random_SNP, "random_SNP_10_3_29.txt", append = FALSE, sep = "\t", de
 #****HIest************************************#
 #*********************************************#
 #change working directory
-#data preperation on cluster using vcftools 
+#data preperation on cluster using vcftools, keep only fixed differences between species
 vcftools --vcf GBSCAK_9_3_20_noUN_nohet_noL.recode.vcf \
 --positions filter_10_3_20.txt \
 --012 \
@@ -730,7 +731,7 @@ vcftools --vcf GBSCAK_9_3_20_noUN_nohet_noL.recode.vcf \
 #substitute missing data from -1 to NA
 sed 's/-1/NA/g' GBSfixed17_4_20.012 > GBSfixed17_4_20.012NA
 
-#prepare parental frequency data with 0.99 and 0.003
+#prepare parental frequency .csv with 0.99 and 0.003
 
 #load genotype data
 gcak<-read.csv("geno_fixed_diff.csv", 
@@ -744,7 +745,7 @@ HI.cak <- HIest(gcak,pcak,type="allele.count", iterations=99,surf=TRUE,startgrid
 HI.cak.class <- HIclass(gcak,pcak,type="allele.count")
 
 Htest <- HItest(HI.cak.class,HI.cak, thresholds = c(2, 1))
-#c1 all true except 3 samples, c2 138 false, 119 true
+
 write.csv(HI.cak, file = "HI.cak", append = FALSE, quote = TRUE, sep = " ",
           eol = "\n", na = "NA", dec = ".", row.names = TRUE,
           col.names = TRUE, qmethod = c("escape", "double"),
@@ -858,8 +859,7 @@ dev.off()
 #*Spearmans correlation test*#
 #*******************************************************************************#
 #change working directory
-#Spearman with rank of sampling locations
-#fastStrucutre Q values per population (k5 global thinned dataset) and S values per population as input
+#rank of sampling locations, fastStrucutre Q values per population (k5 global thinned dataset) and S values per population as input
 #in AUS only south east mainland Individuals
 AUS_MHE <- read.csv("Pop_rank_AUS_MHE.csv", header=TRUE)
 AUS_MH <- read.csv("Pop_rank_AUS_MH.csv", header=TRUE)
@@ -878,7 +878,6 @@ cor.test(AUS_MH$S,AUS_MH$rank, method=c("spearman"))
 cor.test(AUS_fsH$Q.value,AUS_fsH$rank, method=c("spearman")) 
 cor.test(AUS_HiH$S,AUS_HiH$rank, method=c("spearman")) 
 
-
 cor.test(wNA_MHE$Q.value,wNA_MHE$rank, method=c("spearman")) 
 cor.test(wNA_MHE$S,wNA_MHE$rank, method=c("spearman")) 
 cor.test(wNA_MH$Q.value,wNA_MH$rank, method=c("spearman")) 
@@ -895,6 +894,7 @@ cor.test(wNA_HiH$S,wNA_HiH$rank, method=c("spearman"))
 #change working directory
 #use basicStats for AR_CI
 #use divBasic for FIS_CI
+
 basicStats(infile = "Genepop_18_4_20.txt", 
            outfile = "basicStats_18_4", fis_ci = F,
            ar_ci = TRUE, ar_boots = 1000,
