@@ -1,3 +1,4 @@
+Updated 23_9_20
 Step 1) 
 -download all of the data Cakile 1 & Cakile 2 and Cakile 3 & Cakile 4 and put on shared folder, unzip the files (all row data)
 -prepare barcode files, sample name and enzyme sequence and barcode sequence= CP1aCP2.txt and CP3aCP4.txt
@@ -305,9 +306,34 @@ vcftools --vcf GBSCAK_9_3_20_noUN_nohet.vcf --thin 1000 --recode --recode-INFO-a
 
 #ouput is global thinned dataset
 
-#convert to structure with PGDSpider and run fastStructure
-java -jar PGDSpider_2.1.0.3/PGDSpider2-cli.jar -inputfile GBSCAK_9_3_20_noUN_nohet_1000.recode.vcf -inputformat VCF -outputfile GBSCAK_9_3_20_noUN_nohet_1000.snps.str -outputformat STRUCTURE -spid VCF_to_Structure_Cakile.spid
+#convert to plink for Admixture
+plink --vcf GBSCAK_9_3_20_noUN_nohet_1000_noL.recode.vcf --allow-extra-chr --recode --out GBSCAK_9_3_20_noUN_nohet_1000_noL
+#fix input data
+sed 's/Caki_scaffold//g' GBSCAK_9_3_20_noUN_nohet_1000_noL.bim > testGBSCAK_9_3_20_noUN_nohet_1000_noL.bim
+cat testGBSCAK_9_3_20_noUN_nohet_1000_noL.bim | awk '{print $4}' | sort -u | wc -l
+mv testGBSCAK_9_3_20_noUN_nohet_1000_noL.bim GBSCAK_9_3_20_noUN_nohet_1000_noL.bim
 
+#run Admixture
+#unsupervised run
+for K in 2 3 4 5 6 7 8 9 10; \
+do ./admixture \
+-B1000 \
+--cv=10 \
+-C 0.0000000001 \
+~/Admixture//GBSCAK_9_3_20_noUN_nohet_1000_noL.bed \
+$K | tee log${K}.out; \
+done
+
+#supervised run
+for K in 2; \
+do admixture \
+-B1000 \
+--cv=10 \
+--supervised \
+-C 0.0000000001 \
+~Admixture/GBSCAK_9_3_20_noUN_nohet_1000_noL.bed \
+$K | tee log${K}.out; \
+done
 ##########################################################################################
 #*******************************************************#
 #*fixed differences between C. edentula and C. maritima*#
@@ -356,57 +382,6 @@ paste names4 data4 > analysis_Home_tree012NAnames.012
 
 #create tree as above
 ##########################################################################################
-#**********************************#
-#*C. edentula native range dataset*#
-#**********************************#
-#use that file GBSCAK_9_3_20_noUN_nohet to find edentula polymorphic snps
-#first need a file with only edentula individuals from the home range
-vcftools --vcf GBSCAK_9_3_20_noUN_nohet.recode.vcf --keep E_Home_Ind --recode --recode-INFO-all --out Edentula_GBSCAK_9_3_20_noUN_nohet
-
-#then allele frequency
-vcftools --vcf Edentula_GBSCAK_9_3_20_noUN_nohet.vcf --freq2 --out correct_E_ploy
-
-awk '$6 > 0' correct_E_ploy.frq | awk '$6 < 1' | cut -f1-2 > correc_polymorphicEdentula
-
-#filter for those --positions 
-vcftools --vcf Edentula_GBSCAK_9_3_20_noUN_nohet.vcf --positions correc_polymorphicEdentula --recode --recode-INFO-all --out correct_E_poly_H0me 
-
-#thin for 1000 
-vcftools --vcf correct_E_poly_H0me.vcf --thin 1000 --recode --recode-INFO-all --out Edentula_GBSCAK_9_3_20_noUN_nohet_1000
-
-#output is the C. edentula native range dataset
-#convert to structure and run fastStructure
-##########################################################################################
-#**********************************#
-#*C. edentula global dataset*#
-#**********************************#
-#use the filter above on all Individuals
-
-vcftools --vcf GBSCAK_9_3_20_noUN_nohet.vcf --positions correc_polymorphicEdentula --recode --recode-INFO-all --out 705_E_spec_all
-#output is the C. edentula global dataset
-#convert to structure and run fastStructure
-##########################################################################################
-#**********************************#
-#*C. maritima native range dataset*#
-#**********************************#
-#make a vcf file only containing Europe samples 
-vcftools --vcf GBSCAK_9_3_20_noUN_nohet.vcf --keep Europe_samples --recode --recode-INFO-all --out Europe_1_4_20
-
-#then allele frequency
-vcftools --vcf Europe_1_4_20.vcf --freq2 --out M_ploy
-
-awk '$6 > 0'  M_ploy.frq | awk '$6 < 1' | cut -f1-2 > polymorphicMartitima
-
-#filter for those --positions 
-vcftools --vcf Europe_1_4_20.vcf --positions polymorphicMartitima --recode --recode-INFO-all --out M_home_poly_Europe
-
-#thin for 1000 
-vcftools --vcf M_home_poly_Europe.vcf --thin 1000 --recode --recode-INFO-all --out Maritima_GBSCAK_1_4_20_noUN_nohet_1000
-
-#output is the C. maritima native range dataset
-#convert to structure and run fastStructure
-
-
 ##########################################################################################
 #**********************************#
 #*Nextgenmap alignment*#
@@ -426,7 +401,7 @@ vcftools --vcf M_home_poly_Europe.vcf --thin 1000 --recode --recode-INFO-all --o
 ### array job
 #SBATCH --array=1-384
 
-cd /home/hros0002/om62/ddGBS-Cakile/paired-fastq
+cd /home/paired-fastq
 
 echo "I am job $SLURM_ARRAY_TASK_ID on `/bin/hostname`"
 DATA=`head -n $SLURM_ARRAY_TASK_ID paired2.list | tail -1`
