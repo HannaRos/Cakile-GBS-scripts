@@ -1,4 +1,5 @@
 #GBS Cakile R script
+#updated 23_9_20
 library(pophelper) 
 library(gridExtra)
 library(ggplot2)
@@ -10,152 +11,192 @@ library(tidyverse)
 library(car)
 library(HIest)
 library(ggpubr) 
-library(dplyr)
+library(diveRsity
 
 ############################################################################################################
 #****************************************************************************#
-#****global thinned dataset******#
+#****global thinned dataset, unsupervised run******#
 #****************************************************************************#
-#fastStructure visulaization with Pophelper and pie charts for k=5
-ffiles <- list.files(path="k5/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#run Clumpp outside of R, and average Individuals per population in excel for pie charts
+#Admixture
+#CV error for best K
+CV_world_unsuper <- read.csv("CV_worlwide_run2.csv",header=TRUE)
 
-#pie charts
-K5 <- read.table("pop_K5-combined-merged0.txt")
-colnames(K5) <- c('V1','k1','k2','k3','k4','k5','V2')
-Popinfo <- read.csv("Popinfo_fastS_o_L3.csv",header=TRUE)
-k5_to_plot <- cbind(Popinfo,K5)
-write.table(k5_to_plot, "k5_toplot_9_4_2.csv", append = FALSE, sep = "\t", dec = ".",
-            row.names = TRUE, col.names = TRUE, quote = FALSE)
-
-k5_toplot <- read.csv("Pop_pie.csv", header=TRUE)
-
-#global
-pdf("world_k5.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4), xlim=c(-155,180), ylim=c(-46,65))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(k5_toplot ))){
-  the_longitude <-k5_toplot [line,"Long"] 
-  the_latitude <-k5_toplot [line,"Lat"]
-  the_k1 <-k5_toplot [line,"k1"]
-  the_k2 <-k5_toplot [line,"k2"]
-  the_k3 <-k5_toplot [line,"k3"]
-  the_k4 <-k5_toplot [line,"k4"]
-  the_k5 <-k5_toplot [line,"k5"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5), radius=2)
-}
+pdf("CV_error_world_supervised.pdf",useDingbats=FALSE)
+plot(CV_world_unsuper)
 dev.off()
-
-#Europe and northern Africa
-pdf("EU_k5.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim = c(-20, 35),ylim = c(26, 59))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(k5_toplot ))){
-  the_longitude <-k5_toplot [line,"Long"] 
-  the_latitude <-k5_toplot [line,"Lat"]
-  the_k1 <-k5_toplot [line,"k1"]
-  the_k2 <-k5_toplot [line,"k2"]
-  the_k3 <-k5_toplot [line,"k3"]
-  the_k4 <-k5_toplot [line,"k4"]
-  the_k5 <-k5_toplot [line,"k5"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5), radius=1.25)
-}
-dev.off()
-
-#western North America
-pdf("wNA_k5.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(k5_toplot ))){
-  the_longitude <-k5_toplot [line,"Long"] 
-  the_latitude <-k5_toplot [line,"Lat"]
-  the_k1 <-k5_toplot [line,"k1"]
-  the_k2 <-k5_toplot [line,"k2"]
-  the_k3 <-k5_toplot [line,"k3"]
-  the_k4 <-k5_toplot [line,"k4"]
-  the_k5 <-k5_toplot [line,"k5"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5), radius=1.25)
-}
-dev.off()
-
-
-#Australia, mainland
-pdf("AUS_Main_k5.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(112,165),ylim=c(-40,-25))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(k5_toplot ))){
-  the_longitude <-k5_toplot [line,"Long"] 
-  the_latitude <-k5_toplot [line,"Lat"]
-  the_k1 <-k5_toplot [line,"k1"]
-  the_k2 <-k5_toplot [line,"k2"]
-  the_k3 <-k5_toplot [line,"k3"]
-  the_k4 <-k5_toplot [line,"k4"]
-  the_k5 <-k5_toplot [line,"k5"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5), radius=1)
-}
-dev.off()
-
-#Australia, Tasmania
-pdf("TAS_k5.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(k5_toplot ))){
-  the_longitude <-k5_toplot [line,"Long"] 
-  the_latitude <-k5_toplot [line,"Lat"]
-  the_k1 <-k5_toplot [line,"k1"]
-  the_k2 <-k5_toplot [line,"k2"]
-  the_k3 <-k5_toplot [line,"k3"]
-  the_k4 <-k5_toplot [line,"k4"]
-  the_k5 <-k5_toplot [line,"k5"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5), radius=0.15)
-}
-dev.off()
-
-#disrupt plot
-mcfiles <- readQ("pop_K5-combined-merged.txt", filetype = "auto")
+#K8 as optimal K
+##visulaization with Pophelper and pie charts for k=8
+#Barplot
+#first Barplot
+mcfiles <- readQ("GBSCAK_9_3_20_noUN_nohet_1000_noL.8.Q", filetype = "auto")
 mclist <- mcfiles
-Country_Species1 <- read.csv("Range_species_2.csv", header=TRUE, stringsAsFactors=F)
-sapply(Country_Species1, is.character)
+Cluster_world_SE <- read.csv("disrupt_SE.csv",header=TRUE,stringsAsFactors = FALSE)
+head(Cluster_world_SE)
+sapply(Cluster_world_SE, is.character)
 fn1 <- function(x) attr(x,"k")
 spnames <- paste0("K=",sapply(mclist,fn1))
-plotQ(mclist[1],returnplot=T,exportplot=T,quiet=T,basesize=11,showsp=T,splab=spnames[1],
-      showlegend=T,legendpos="right",legendtextsize=3,
-      legendlab=c("M1","M2","M3","E","M4"), showyaxis=F,showticks=F, sortind = "all",
-      grplab = Country_Species1,selgrp="Range",ordergrp=TRUE,indlabwithgrplab=T,
-      grplabsize = 1, splabsize = 2.5,barbordercolour = "black",barbordersize = 0.01,imgtype = "pdf")
+
+plotQ(mclist[1],returnplot=TRUE,exportplot=T,quiet=T, basesize=11,showsp=T,splab=spnames[1],
+      clustercol=c("#87afff","#005f00","#00af00","#0000d7","#00ffff","#00ff00","#dfff5f","#00afaf"), showlegend=F, showyaxis=F,showticks=F, sortind = "all",
+      grplab = Cluster_world_SE,selgrp="Range",ordergrp=TRUE,indlabwithgrplab=T,grplabangle=-90,
+      grplabsize = 1, splabsize = 3.5,barbordercolour = "black",barbordersize = 0.01,
+      grplabpos= 0,grplabjust=0.7,imgtype = "pdf")
+
+#Piecharts for populations
+WorlPopk8_unsuper <- read.csv("worldwideK8_Poppie.csv",header=TRUE)
+
+pdf("world_admxiture7_9.pdf")
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4), xlim=c(-155,180), ylim=c(-46,65)) #world
+map.scale(metric=TRUE,ratio=FALSE) #for km
+for (line in (1:nrow(WorlPopk8_unsuper))){
+  the_longitude <-WorlPopk8_unsuper[line,"Long"] 
+  the_latitude <-WorlPopk8_unsuper[line,"Lat"]
+  the_k1 <-WorlPopk8_unsuper[line,"k1"]
+  the_k2 <-WorlPopk8_unsuper[line,"k2"]
+  the_k3 <-WorlPopk8_unsuper[line,"k3"]
+  the_k4 <-WorlPopk8_unsuper[line,"k4"]
+  the_k5 <-WorlPopk8_unsuper[line,"k5"]
+  the_k6 <-WorlPopk8_unsuper[line,"k6"]
+  the_k7 <-WorlPopk8_unsuper[line,"k7"]
+  the_k8 <-WorlPopk8_unsuper[line,"k8"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5, the_k6,the_k7,the_k8), radius=2, col = c("#87afff","#005f00","#00af00","#0000d7","#00ffff","#00ff00","#dfff5f","#00afaf"))
+}
+dev.off()
+
+#eNA
+pdf("easternNorthAmerica_admxiture7_9.pdf")
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-100, -47), ylim = c(40, 52))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+for (line in (1:nrow(WorlPopk8_unsuper))){
+  the_longitude <-WorlPopk8_unsuper[line,"Long"] 
+  the_latitude <-WorlPopk8_unsuper[line,"Lat"]
+  the_k1 <-WorlPopk8_unsuper[line,"k1"]
+  the_k2 <-WorlPopk8_unsuper[line,"k2"]
+  the_k3 <-WorlPopk8_unsuper[line,"k3"]
+  the_k4 <-WorlPopk8_unsuper[line,"k4"]
+  the_k5 <-WorlPopk8_unsuper[line,"k5"]
+  the_k6 <-WorlPopk8_unsuper[line,"k6"]
+  the_k7 <-WorlPopk8_unsuper[line,"k7"]
+  the_k8 <-WorlPopk8_unsuper[line,"k8"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5, the_k6,the_k7,the_k8), radius=0.8, col = c("#87afff","#005f00","#00af00","#0000d7","#00ffff","#00ff00","#dfff5f","#00afaf"))
+}
+dev.off()
+
+#wNA
+pdf("westernNorthAmerica_admxiture7_9.pdf")
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+for (line in (1:nrow(WorlPopk8_unsuper))){
+  the_longitude <-WorlPopk8_unsuper[line,"Long"] 
+  the_latitude <-WorlPopk8_unsuper[line,"Lat"]
+  the_k1 <-WorlPopk8_unsuper[line,"k1"]
+  the_k2 <-WorlPopk8_unsuper[line,"k2"]
+  the_k3 <-WorlPopk8_unsuper[line,"k3"]
+  the_k4 <-WorlPopk8_unsuper[line,"k4"]
+  the_k5 <-WorlPopk8_unsuper[line,"k5"]
+  the_k6 <-WorlPopk8_unsuper[line,"k6"]
+  the_k7 <-WorlPopk8_unsuper[line,"k7"]
+  the_k8 <-WorlPopk8_unsuper[line,"k8"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5, the_k6,the_k7,the_k8), radius=0.8, col = c("#87afff","#005f00","#00af00","#0000d7","#00ffff","#00ff00","#dfff5f","#00afaf"))
+}
+dev.off()
+
+#EU
+pdf("EU_admxiture7_9.pdf")
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim = c(-20, 45),ylim = c(27, 58))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+for (line in (1:nrow(WorlPopk8_unsuper))){
+  the_longitude <-WorlPopk8_unsuper[line,"Long"] 
+  the_latitude <-WorlPopk8_unsuper[line,"Lat"]
+  the_k1 <-WorlPopk8_unsuper[line,"k1"]
+  the_k2 <-WorlPopk8_unsuper[line,"k2"]
+  the_k3 <-WorlPopk8_unsuper[line,"k3"]
+  the_k4 <-WorlPopk8_unsuper[line,"k4"]
+  the_k5 <-WorlPopk8_unsuper[line,"k5"]
+  the_k6 <-WorlPopk8_unsuper[line,"k6"]
+  the_k7 <-WorlPopk8_unsuper[line,"k7"]
+  the_k8 <-WorlPopk8_unsuper[line,"k8"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5, the_k6,the_k7,the_k8), radius=1.25, col = c("#87afff","#005f00","#00af00","#0000d7","#00ffff","#00ff00","#dfff5f","#00afaf"))
+}
+dev.off()
+
+#Australia mainland and New Zealand
+pdf("AUstraliamain_admxiture7_9.pdf")
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim = c(110, 180), ylim = c(-46.5, -26) )
+map.scale(metric=TRUE,ratio=FALSE) #for km
+for (line in (1:nrow(WorlPopk8_unsuper))){
+  the_longitude <-WorlPopk8_unsuper[line,"Long"] 
+  the_latitude <-WorlPopk8_unsuper[line,"Lat"]
+  the_k1 <-WorlPopk8_unsuper[line,"k1"]
+  the_k2 <-WorlPopk8_unsuper[line,"k2"]
+  the_k3 <-WorlPopk8_unsuper[line,"k3"]
+  the_k4 <-WorlPopk8_unsuper[line,"k4"]
+  the_k5 <-WorlPopk8_unsuper[line,"k5"]
+  the_k6 <-WorlPopk8_unsuper[line,"k6"]
+  the_k7 <-WorlPopk8_unsuper[line,"k7"]
+  the_k8 <-WorlPopk8_unsuper[line,"k8"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5, the_k6,the_k7,the_k8), radius=1, col = c("#87afff","#005f00","#00af00","#0000d7","#00ffff","#00ff00","#dfff5f","#00afaf"))
+}
+dev.off()
+
+#Australia-Tasmania
+pdf("TAS_admxiture7_9.pdf")
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40.7))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+for (line in (1:nrow(WorlPopk8_unsuper))){
+  the_longitude <-WorlPopk8_unsuper[line,"Long"] 
+  the_latitude <-WorlPopk8_unsuper[line,"Lat"]
+  the_k1 <-WorlPopk8_unsuper[line,"k1"]
+  the_k2 <-WorlPopk8_unsuper[line,"k2"]
+  the_k3 <-WorlPopk8_unsuper[line,"k3"]
+  the_k4 <-WorlPopk8_unsuper[line,"k4"]
+  the_k5 <-WorlPopk8_unsuper[line,"k5"]
+  the_k6 <-WorlPopk8_unsuper[line,"k6"]
+  the_k7 <-WorlPopk8_unsuper[line,"k7"]
+  the_k8 <-WorlPopk8_unsuper[line,"k8"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5, the_k6,the_k7,the_k8), radius=0.15, col = c("#87afff","#005f00","#00af00","#0000d7","#00ffff","#00ff00","#dfff5f","#00afaf"))
+}
+dev.off()
+
 
 #PCA
 #Set up file names
-vcf_PCA_14_4 <-c("GBSCAK_9_3_20_noUN_nohet_1000_noL.recode.vcf")
-gds_PCA_14_4 <- c("GBSCAK_9_3_20_noUN_nohet_1000_noL.snps.gds")
-popinfo <- read.csv("Popinfo_fastS_o_L2.csv", header = TRUE)
+vcf_PCA_8_9 <-c("GBSCAK_9_3_20_noUN_nohet_1000_noL.recode.vcf")
+gds_PCA_8_9 <- c("GBSCAK_9_3_20_noUN_nohet_1000_noL.snps.gds")
 
 #Convert your vcf to gds for use with snprelate
-snpgdsVCF2GDS(vcf_PCA_14_4, gds_PCA_14_4,  method="biallelic.only",ignore.chr.prefix="Chr")
+snpgdsVCF2GDS(vcf_PCA_8_9, gds_PCA_8_9,  method="biallelic.only",ignore.chr.prefix="Chr")
 #Load the gds file
-genofile <- snpgdsOpen(gds_PCA_14_4)
+genofile <- snpgdsOpen(gds_PCA_8_9)
 #Run the PCA
 pca <- snpgdsPCA(genofile, num.thread = 2, eigen.cnt = 16, snp.id = NULL,autosome.only = F)
-#percent variance explained
+#Lets take a look at the percent variance explained
 pc.percent <- pca$varprop*100
 head(round(pc.percent, 2))
-#Make a dataframe of PCA results
+# 33.17  6.12  4.54  1.64  1.31  1.19
+#Make a dataframe of your PCA results
 tab <- data.frame(name = pca$sample.id,
                   EV1 = pca$eigenvect[,1],    # the first eigenvector
                   EV2 = pca$eigenvect[,2],    # the second eigenvector
-                  stringsAsFactors = FALSE)
-#merge taba and popinfo 
-PCA_14_4 <- cbind(popinfo,tab)
-# plot
+                stringsAsFactors = FALSE)
+#colour like SE cutt of for hybrids
+popinfo <- read.csv("disrupt_SE.csv",header=TRUE,stringsAsFactors = FALSE)
+PCA_8_9 <- cbind(popinfo,tab)
+head(PCA_8_9)
+
+pdf("PCA_admixtureSE.pdf",useDingbats=FALSE)
+ggplot(PCA_8_9) +
+  geom_point(aes(x=EV1 , y=EV2, color=factor(Species)), size=5, shape=20) +
+  scale_color_manual(values = c("#66FF00","#CC00CC","#3333FF"),aesthetics = "colour") +
+  stat_ellipse(aes(x=EV1,y=EV2,fill=factor(Species)),linetype=2,
+               geom="polygon", level=0.95, alpha=0.2) + theme_classic() +
+  scale_color_manual(values = c("#66FF00","#CC00CC","#3333FF"),aesthetics = "fill") +
+  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
+  guides(color=guide_legend("Species_Admixture_SE"),fill=guide_legend("Species_Admixture_SE")) +
+  scale_y_continuous(name="EV2 6.12 %", limits=c(-0.23,0.28)) +
+  scale_x_continuous(name="EV1 33.17 %", limits=c(-0.19,0.15))
+dev.off()
+
 pdf("PCA_Range.pdf",useDingbats=FALSE)
 ggplot(PCA_14_4) +
   geom_point(aes(x=EV1, y=EV2, color=factor(Range)), size=5, shape=20) +
@@ -176,532 +217,23 @@ ggplot(PCA_14_4) +
   scale_x_continuous(name="EV1 33.17 %", limits=c(-0.19,0.15))
 dev.off()
 
-pdf("PCA_fastStructure.pdf",useDingbats=FALSE)
-ggplot(PCA_14_4) +
-  geom_point(aes(x=EV1 , y=EV2, color=factor(Species_Structure)), size=5, shape=20) +
-  stat_ellipse(aes(x=EV1,y=EV2,fill=factor(Species_Structure)),linetype=2,
-               geom="polygon", level=0.95, alpha=0.2) + theme_classic() +
-  theme(panel.border = element_rect(fill = NA, colour = "grey50")) + theme(legend.position = "none")+
-  scale_y_continuous(name="EV2 6.12 %", limits=c(-0.23,0.21)) +
-  scale_x_continuous(name="EV1 33.17 %", limits=c(-0.19,0.15))
-dev.off()
-
-
-#multi K disrupt plot
-#k2
-ffiles <- list.files(path="k2/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#run Clumpp outside of R
-
-#k3
-ffiles <- list.files(path="k3/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#run Clumpp outside of R
-
-#k4
-ffiles <- list.files(path="k4/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#run Clumpp outside of R
-
-#k6
-ffiles <- list.files(path="k6/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#run Clumpp outside of R
-
-#make new folder with all combined_merged output files of Clumpp as input
-
-mcfiles <- list.files("disrupt_k2-6/", full.names=T)
-mclist <- readQ(files=mcfiles)
-mclist1 <- alignK(mclist[c(1,2,3,4,5)])
-
-Country_Species1 <- read.csv("Range_species_2.csv", header=TRUE, stringsAsFactors=F)
+#multi K plot 2-10
+#make a folder with only the Q files to use
+afiles <- list.files(("multiK/"), full.names=T)
+alist <- readQ(afiles)
+popinfo <- read.csv("disrupt_SE.csv",header=TRUE,stringsAsFactors = FALSE)
 
 fn1 <- function(x) attr(x,"k")
-spnames <- paste0("K=",sapply(mclist1,fn1))
-p1 <- plotQ(alignK(mclist1[c(1,2,3,4,5)]),imgoutput="join",returnplot=T,exportplot=F,quiet=T,
-            basesize=11,grplab = Country_Species1,selgrp="Range",ordergrp=TRUE,
+spnames <- paste0("K=",sapply(alist1,fn1))
+p1 <- plotQ(alignK(alist[c(1,2,3,4,5,6,7,8,9)]),imgoutput="join",returnplot=T,exportplot=F,quiet=T,
+            basesize=11,grplab = popinfo,selgrp="Range",ordergrp=TRUE,
             grplabsize = 3, splabsize = 9,barbordercolour = "black",barbordersize = 0.01,
             height=0.08,sortind = "all",sharedindlab=FALSE,splab=spnames[1:5]
-            )
-grid.arrange(p1$plot[[1]]) #export as pdf
-
-############################################################################################################
-#***************************************************************************************#
-#****C. edentula native range dataset*#
-#***************************************************************************************#
-#change working directory
-#fastStructure visulaization with Pophelper and pie charts for k=5
-ffiles <- list.files(path="k5/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#run Clumpp outside of R, and average Individuals per population in excel for pie charts
-
-#pie charts
-K5_E_toplot <- read.csv("Poppie_plot.csv", header=TRUE)
-
-pdf("E_native.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-100, -47), ylim = c(40, 52))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(K5_E_toplot))){
-  the_longitude <-K5_E_toplot [line,"Long"] 
-  the_latitude <-K5_E_toplot [line,"Lat"]
-  the_k1 <-K5_E_toplot [line,"k1"]
-  the_k2 <-K5_E_toplot [line,"k2"]
-  the_k3 <-K5_E_toplot [line,"k3"]
-  the_k4 <-K5_E_toplot [line,"k4"]
-  the_k5 <-K5_E_toplot [line,"k5"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5), radius=1)
-}
-dev.off()
-
-#disrupt plot
-mcfiles <- readQ("pop_K5-combined-merged.txt", filetype = "auto")
-mclist <- mcfiles
-Country_Species1 <- read.csv("Country_Location3.csv", header=TRUE, stringsAsFactors=F)
-sapply(Country_Species1, is.character)
-
-fn1 <- function(x) attr(x,"k")
-spnames <- paste0("K=",sapply(mclist,fn1))
-plotQ(mclist[1],returnplot=TRUE,exportplot=T,quiet=T, basesize=11,showsp=T,splab=spnames[1],
-      showlegend=F, showyaxis=F,showticks=F, sortind = "all",
-      grplab = Country_Species1,selgrp="Cluster",ordergrp=TRUE,indlabwithgrplab=T,grplabangle=-90,
-      grplabsize = 1, splabsize = 3.5,barbordercolour = "black",barbordersize = 0.01,
-      grplabpos= 0,grplabjust=0.7,imgtype = "pdf")
-
-
-#Set up file names
-vcf_PCA_7_4 <-c("Edentula_GBSCAK_9_3_20_noUN_nohet_1000.recode.vcf")
-gds_PCA_7_4 <- c("Edentula_GBSCAK_9_3_20_noUN_nohet_1000.snps.gds")
-#popfile 
-popinfo <- read.csv("PCA_pop1.csv", header= TRUE)
-#Convert your vcf to gds for use with snprelate
-snpgdsVCF2GDS(vcf_PCA_7_4, gds_PCA_7_4,  method="biallelic.only",ignore.chr.prefix="Chr")
-#Load the gds file
-genofile <- snpgdsOpen(gds_PCA_7_4)
-#Run the PCA
-pca <- snpgdsPCA(genofile, num.thread = 2, eigen.cnt = 16, snp.id = NULL,autosome.only = F)
-#Lets take a look at the percent variance explained
-pc.percent <- pca$varprop*100
-head(round(pc.percent, 2))
-#Make a dataframe of your PCA results
-tab <- data.frame(name = pca$sample.id,
-                  EV1 = pca$eigenvect[,1],    # the first eigenvector
-                  EV2 = pca$eigenvect[,2],    # the second eigenvector
-                  stringsAsFactors = FALSE)
-
-#merge tab and popinfo 
-PCA_7_4 <- cbind(popinfo,tab)
-
-pdf("PCA_Ehome.pdf",useDingbats=FALSE)
-ggplot(PCA_7_4) +
-  geom_point(aes(x=EV1, y=EV2, color=Cluster_Structure), size=5, shape=20) +
-  stat_ellipse(aes(x=EV1,y=EV2,fill=Cluster_Structure),linetype=2,
-               geom="polygon", level=0.95, alpha=0.2) + theme_classic() +
-  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  scale_y_continuous(name="EV2 13.20 %") +
-  scale_x_continuous(name="EV1 20.45 %")
-dev.off()
-
-#multi K disrupt plot
-#k2
-ffiles <- list.files(path="k2/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#runClumpp outside of R
-
-#k3
-ffiles <- list.files(path="k3/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#runClumpp outside of R
-
-#k4
-ffiles <- list.files(path="k4/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#runClumpp outside of R
-
-#make new folder with all combined_merged output files of Clumpp as input
-
-mcfiles5 <- list.files("disrupt2-5/", full.names=T)
-mclist3 <- readQ(files = mcfiles5)
-Country_Species1 <- read.csv("Country_Location3.csv", header=TRUE, stringsAsFactors=F)
-
-fn1 <- function(x) attr(x,"k")
-spnames <- paste0("K=",sapply(mclist3,fn1))
-p2 <- plotQ(alignK(mclist3[c(1,2,3,4)]),imgoutput="join",returnplot=T,exportplot=F,quiet=T,
-            basesize=11,grplab = Country_Species1,selgrp="Cluster",ordergrp=TRUE,
-            grplabsize = 3, splabsize = 9,barbordercolour = "black",barbordersize = 0.01,
-            height=0.06,sortind = "all",sharedindlab=FALSE,splab=spnames[1:4],
-            grplabangle = -90, grplabheight=3, grplabpos=0
 )
-grid.arrange(p2$plot[[1]]) #export as pdf
 
-############################################################################################################
-#***************************************************************#
-#****C. edentula global dataset*#
-#***************************************************************#
-#change working directory
-#fastStructure visulaization with Pophelper and pie charts for k=7
-
-#k7, pie and disrupt plot for k7
-ffiles <- list.files(path="k7/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#runClumpp outside of R, and average Individuals per population in excel for pie charts
-
-#pie charts
-K7_E_all_toplot <- read.csv("Pieplots_eglobal_pop.csv", heade=TRUE)
-
-#global
-pdf("eNA_Eglobal_poppie.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-100, -47), ylim = c(40, 52))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(K7_E_all_toplot))){
-  the_longitude <-K7_E_all_toplot[line,"Long"] 
-  the_latitude <-K7_E_all_toplot[line,"Lat"]
-  the_k1 <-K7_E_all_toplot[line,"k1"]
-  the_k2 <-K7_E_all_toplot[line,"k2"]
-  the_k3 <-K7_E_all_toplot[line,"k3"]
-  the_k4 <-K7_E_all_toplot[line,"k4"]
-  the_k5 <-K7_E_all_toplot[line,"k5"]
-  the_k6 <-K7_E_all_toplot[line,"k6"]
-  the_k7 <-K7_E_all_toplot[line,"k7"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5,the_k6,the_k7), radius=0.8)
-}
+pdf("multiK_worldwide_admixture.pdf",useDingbats=FALSE)
+grid.arrange(p1$plot[[1]])
 dev.off()
-
-#western North America
-pdf("wNA_Eglobalpoppie.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(K7_E_all_toplot))){
-  the_longitude <-K7_E_all_toplot[line,"Long"] 
-  the_latitude <-K7_E_all_toplot[line,"Lat"]
-  the_k1 <-K7_E_all_toplot[line,"k1"]
-  the_k2 <-K7_E_all_toplot[line,"k2"]
-  the_k3 <-K7_E_all_toplot[line,"k3"]
-  the_k4 <-K7_E_all_toplot[line,"k4"]
-  the_k5 <-K7_E_all_toplot[line,"k5"]
-  the_k6 <-K7_E_all_toplot[line,"k6"]
-  the_k7 <-K7_E_all_toplot[line,"k7"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5,the_k6,the_k7), radius=0.8 
-}
-dev.off()
-
-#Australia, mainland
-pdf("AUS_main_Eglobalpoppie.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(112,165),ylim=c(-40,-25))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(K7_E_all_toplot))){
-  the_longitude <-K7_E_all_toplot[line,"Long"] 
-  the_latitude <-K7_E_all_toplot[line,"Lat"]
-  the_k1 <-K7_E_all_toplot[line,"k1"]
-  the_k2 <-K7_E_all_toplot[line,"k2"]
-  the_k3 <-K7_E_all_toplot[line,"k3"]
-  the_k4 <-K7_E_all_toplot[line,"k4"]
-  the_k5 <-K7_E_all_toplot[line,"k5"]
-  the_k6 <-K7_E_all_toplot[line,"k6"]
-  the_k7 <-K7_E_all_toplot[line,"k7"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5,the_k6,the_k7), radius=0.7 
-}
-dev.off()
-
-#Australia, Tasmania
-pdf("TAS_Eglobalpoppie.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(K7_E_all_toplot))){
-  the_longitude <-K7_E_all_toplot[line,"Long"] 
-  the_latitude <-K7_E_all_toplot[line,"Lat"]
-  the_k1 <-K7_E_all_toplot[line,"k1"]
-  the_k2 <-K7_E_all_toplot[line,"k2"]
-  the_k3 <-K7_E_all_toplot[line,"k3"]
-  the_k4 <-K7_E_all_toplot[line,"k4"]
-  the_k5 <-K7_E_all_toplot[line,"k5"]
-  the_k6 <-K7_E_all_toplot[line,"k6"]
-  the_k7 <-K7_E_all_toplot[line,"k7"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3,the_k4,the_k5,the_k6,the_k7), radius=0.1 
-}
-dev.off()
-
-#disrupt plot
-mcfiles <- readQ("pop_K7-combined-merged.txt", filetype = "auto")
-mclist <- mcfiles
-Country_Species1 <- read.csv("Range_species_2.csv", header=TRUE, stringsAsFactors=F)
-sapply(Country_Species1, is.character)
-
-fn1 <- function(x) attr(x,"k")
-spnames <- paste0("K=",sapply(mclist,fn1))
-
-plotQ(mclist[1],returnplot=T,exportplot=T,quiet=T,basesize=11,showsp=T,splab=spnames[1],
-      showlegend=F, showyaxis=F,showticks=F, sortind = "all",
-      grplab = Country_Species1,selgrp="Range",ordergrp=TRUE,indlabwithgrplab=T,grplabangle=45,
-      grplabsize = 0.8, splabsize = 2.5,barbordercolour = "black",barbordersize = 0.01,imgtype = "pdf")
-
-#multi K disrupt plot
-#k2
-ffiles <- list.files(path="k2/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#runClumpp outside of R
-
-#k3
-ffiles <- list.files(path="k3/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#runClumpp outside of R
-
-#k4
-ffiles <- list.files(path="k4/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#runClumpp outside of R
-
-#k5
-ffiles <- list.files(path="k5/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#runClumpp outside of R
-
-#k6
-ffiles <- list.files(path="k6/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#runClumpp outside of R
-
-#make new folder with all combined_merged output files of Clumpp as input
-
-mcfiles2 <- list.files("disrupt_2-7/", full.names=T)
-mclist2 <- readQ(files=mcfiles2)
-Country_Species1 <- read.csv("Range_species_2.csv", header=TRUE, stringsAsFactors=F)
-fn1 <- function(x) attr(x,"k")
-spnames <- paste0("K=",sapply(mclist2,fn1))
-p2 <- plotQ(alignK(mclist2[c(1,2,3,4,5,6)]),imgoutput="join",returnplot=T,exportplot=F,quiet=T,
-            basesize=11,grplab = Country_Species1,selgrp="Range",ordergrp=TRUE,
-            grplabsize = 3, splabsize = 9,barbordercolour = "black",barbordersize = 0.01,
-            height=0.08,sortind = "all",sharedindlab=FALSE,splab=spnames[1:6]
-)
-grid.arrange(p2$plot[[1]]) #export as pdf
-
-###########################################################################################
-#*****************************************************************************************#
-#****C. maritima native range dataset*#
-#*****************************************************************************************#
-###########################################################################################
-#change working directory
-#fastStructure visulaization with Pophelper and pie charts for k=3
-ffiles <- list.files(path="k3/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#run Clumpp outside of R
-
-#pie charts
-K3 <- read.table("pop_K3-combined-merged.txt")
-colnames(K3) <- c('V1','k1','k2','k3','V2')
-Popinfo <- read.csv("Popinfo_EU.csv",header=TRUE)
-k3_toplot <- cbind(Popinfo,K3)
-#Europe and northern Africa
-pdf("EU_M_k3.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim = c(-20, 35),ylim = c(26, 59))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(k3_toplot))){
-  the_longitude <-k3_toplot[line,"Long"] 
-  the_latitude <-k3_toplot[line,"Lat"]
-  the_k1 <-k3_toplot[line,"k1"]
-  the_k2 <-k3_toplot[line,"k2"]
-  the_k3 <-k3_toplot[line,"k3"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2,the_k3), radius=1, col = c('#0000CC','yellow','#33CCFF'))
-}
-dev.off()
-
-#disrupt plot
-mcfiles <- readQ("pop_K3-combined-merged.txt", filetype = "auto")
-mclist <- mcfiles
-Country_Species1 <- read.csv("disrupt_cluster4.csv", header=TRUE, stringsAsFactors=F)
-sapply(Country, is.character)
-fn1 <- function(x) attr(x,"k")
-spnames <- paste0("K=",sapply(mclist,fn1))
-
-plotQ(mclist[1],returnplot=T,exportplot=T,quiet=T,basesize=11,showsp=T,splab=spnames[1],
-      clustercol=c('#0000CC','yellow','#33CCFF'), showlegend=F, showyaxis=F,showticks=F, sortind = "all",
-      grplab = Country_Species1,selgrp="Cluster",ordergrp=TRUE,indlabwithgrplab=T,
-      grplabsize = 1, splabsize = 2.5,barbordercolour = "black",barbordersize = 0.01,imgtype = "pdf")
-
-#PCA
-#Set up file names
-vcf_PCA_7_4 <-c("Maritima_GBSCAK_1_4_20_noUN_nohet_1000.recode.vcf")
-gds_PCA_7_4 <- c("Maritima_GBSCAK_1_4_20_noUN_nohet_1000.snps.gds")
-#popfile 
-popinfo <- read.csv("Popinfo_EU.csv",header=TRUE)
-#Convert your vcf to gds for use with snprelate
-snpgdsVCF2GDS(vcf_PCA_7_4, gds_PCA_7_4,  method="biallelic.only",ignore.chr.prefix="Chr")
-#Load the gds file
-genofile1 <- snpgdsOpen(gds_PCA_7_4)
-#Run the PCA
-pca <- snpgdsPCA(genofile1, num.thread = 2, eigen.cnt = 16, snp.id = NULL,autosome.only = F)
-#Lets take a look at the percent variance explained
-pc.percent <- pca$varprop*100
-head(round(pc.percent, 2))
-
-#Make a dataframe of your PCA results
-tab <- data.frame(name = pca$sample.id,
-                  EV1 = pca$eigenvect[,1],    # the first eigenvector
-                  EV2 = pca$eigenvect[,2],    # the second eigenvector
-                  stringsAsFactors = FALSE)
-#merge taba and popinfo 
-PCA_7_4 <- cbind(popinfo,tab)
-
-# plot
-pdf("PCA_EU.pdf",useDingbats=FALSE)
-ggplot(PCA_7_4) +
-  geom_point(aes(x=EV1, y=EV2, color=Cluster_Popstatistik), size=5, shape=20) +
-  scale_color_manual(values = c('#0000CC','#33CCFF'),aesthetics = "colour") +
-  stat_ellipse(aes(x=EV1,y=EV2,fill=Cluster_Popstatistik),linetype=2,
-               geom="polygon", level=0.95, alpha=0.2) + theme_classic() +
-  scale_color_manual(values = c('#0000CC','#33CCFF'),aesthetics = "fill") +
-  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  scale_y_continuous(name="EV2 9.17 %",limits=c(-0.85,0.9)) +
-  scale_x_continuous(name="EV1 20.45 %",limits=c(-0.5,0.5))
-dev.off()
-
-#multi K disrupt plot
-#k=2
-ffiles <- list.files(path="k2/", full.names=T)
-flist <- readQ(files=ffiles)
-attributes(flist)
-tr1 <- tabulateQ(qlist=flist)
-tabulateQ(flist)
-tabulateQ(flist, writetable=TRUE, sorttable = FALSE)
-sr1 <- summariseQ(tr1)
-summariseQ(tr1, writetable=TRUE)
-head(summariseQ(tabulateQ(flist)))
-clumppExport(qlist=flist, useexe=T)
-#run Clumpp outside of R
-#make new folder with all combined_merged output files of Clumpp as input
-
-mcfiles4 <- list.files("disrupt2-3/", full.names=T)
-mclist4 <- readQ(files=mcfiles4)
-Country_Species1 <- read.csv("disrupt_cluster3.csv", header=TRUE, stringsAsFactors=F)
-
-fn1 <- function(x) attr(x,"k")
-spnames <- paste0("K=",sapply(mclist4,fn1))
-p4 <- plotQ(alignK(mclist4[c(1,2)]),imgoutput="join",returnplot=T,exportplot=F,quiet=T,
-            basesize=11,grplab = Country_Species1,selgrp="Cluster",ordergrp=TRUE,
-            grplabsize = 3, splabsize = 9,barbordercolour = "black",barbordersize = 0.01,
-            height=0.08,sortind = "all",sharedindlab=FALSE,splab=spnames[1:2]
-)
-grid.arrange(p4$plot[[1]])
 
 ############################################################################################################
 #*********************************************#
@@ -731,160 +263,340 @@ vcftools --vcf GBSCAK_9_3_20_noUN_nohet_noL.recode.vcf \
 #substitute missing data from -1 to NA
 sed 's/-1/NA/g' GBSfixed17_4_20.012 > GBSfixed17_4_20.012NA
 
-#prepare parental frequency .csv with 0.99 and 0.003
-
-#load genotype data
+#prepare parental frequency .csv with 0.99 and 0.03
+load genotype data
 gcak<-read.csv("geno_fixed_diff.csv", 
-               stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA",""))
+               stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA","") )
 #load frequency data
 pcak<-read.csv("freq_fixed_diff.csv", 
-               stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA",""))
+               stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA","") )
 
-HI.cak <- HIest(gcak,pcak,type="allele.count", iterations=99,surf=TRUE,startgrid=20)
+HI <- HIest(gcak,pcak,type="allele.count", iterations=99,surf=TRUE,startgrid=20)
+HI.class <- HIclass(gcak,pcak,type="allele.count")
 
-HI.cak.class <- HIclass(gcak,pcak,type="allele.count")
+# compare classification with maximum likelihood estimates
+Cak.test <- HItest(HI.class,HI, thresholds = c(2,2))
 
-Htest <- HItest(HI.cak.class,HI.cak, thresholds = c(2, 1))
-
-write.csv(HI.cak, file = "HI.cak", append = FALSE, quote = TRUE, sep = " ",
+table(Cak.test$c1)
+# all 254 TRUE, 3 FALSE, meaning the best classification is at least 2 log-likelihood units better than the next best
+table(Cak.test$c2)
+#121 FALSE 136 TRUE
+cakmerged_9_9_20 <- data.frame(name = gcak$sample,
+                        H = HI$H, 
+                        S = HI$S, 
+                        logLik = HI$logLik,  
+                        class100 = HI.class$class100,  
+                        class010 = HI.class$class010, 
+                        class121 = HI.class$class121, 
+                        class110 = HI.class$class110, 
+                        class011 = HI.class$class011,  
+                        class001 = HI.class$class001,  
+                        BestClass = HI.class$B,  
+                        ClassLLD = HI.class$LLD,
+                        LL.Class = Cak.test$LLD.class,
+                        LL.max = Cak.test$LL.max,
+                        dAIC = Cak.test$dAIC,
+                        c1test = Cak.test$c1,
+                        c2test = Cak.test$c2,
+                        stringsAsFactors = FALSE)
+write.csv(cakmerged_9_9_20, file = "HIest9_9_20.csv", append = FALSE, quote = TRUE, sep = " ",
           eol = "\n", na = "NA", dec = ".", row.names = TRUE,
           col.names = TRUE, qmethod = c("escape", "double"),
           fileEncoding = "")
 
-write.csv(HI.cak.class, file = "HI.cak.class", append = FALSE, quote = TRUE, sep = " ",
-          eol = "\n", na = "NA", dec = ".", row.names = TRUE,
-          col.names = TRUE, qmethod = c("escape", "double"),
-          fileEncoding = "")
-
-write.csv(Htest, file = "HI_test", append = FALSE, quote = TRUE, sep = " ",
-          eol = "\n", na = "NA", dec = ".", row.names = TRUE,
-          col.names = TRUE, qmethod = c("escape", "double"),
-          fileEncoding = "")
-
-#plot HI.class diagrams modify colours and add triangle with illustrator 
-AUS_Triangle <- read.csv("HI_AUS_9_4.csv", header=TRUE)
-wNA_Triangle <- read.csv("HI_9_4_wNA.csv", header=TRUE)
-
-head(wNA_Triangle)
-pdf("Triangle_wNA.pdf",useDingbats=FALSE)
-ggplot(wNA_Triangle) +
-  geom_point(aes(x=S, y=H, color=factor(Hiest)), size=5, shape=20) +
-  theme_classic() +
-  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  guides(color=guide_legend("Hiest"),fill=guide_legend("Hiest"))+
-  scale_y_continuous(limits=c(0,1)) +
-  scale_x_continuous(limits=c(0,1))
-dev.off()
+#plot Hiest, triangle and maps
+#make csv files with only wNA and only AUS
+#trianlge
+AUS_Triangle <- read.csv("Hiest_AUS_9_9.csv", header=TRUE)
+wNA_Triangle <- read.csv("HIest_wNA_9_9.csv", header=TRUE)
+head(AUS_Triangle)
 
 pdf("Triangle_AUS.pdf",useDingbats=FALSE)
 ggplot(AUS_Triangle) +
-  geom_point(aes(x=S, y=H, color=factor(Hiest)), size=5, shape=20) + +
+  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
+  scale_color_manual(values = c('#FF9900','#0099CC','#FFFF33','#FF00CC','#0000FF')) +
   theme_classic() +
   theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  guides(color=guide_legend("Hiest"),fill=guide_legend("Hiest"))+
+  guides(color=guide_legend("NewHiest9_9"),fill=guide_legend("NewHiest9_9"))+
+  scale_y_continuous(limits=c(0,1)) +
+  scale_x_continuous(limits=c(0,1))
+dev.off()
+
+pdf("Triangle_AUS_nolegend.pdf",useDingbats=FALSE)
+ggplot(AUS_Triangle) + 
+  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
+  scale_color_manual(values = c('#FF9900','#0099CC','#FFFF33','#FF00CC','#0000FF')) +
+  theme_classic() +
+  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
+  theme(legend.position = "none") +
   scale_y_continuous(limits=c(0,1)) +
   scale_x_continuous(limits=c(0,1))
 dev.off()
 
 
-#plot on maps, individuals next to each other
-Plot_Hiest <- read.csv("HIest_plot_18_5.csv", header=TRUE)
-
-#world
-pdf("Hiest_world.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4), xlim=c(-155,180), ylim=c(-46,65)) 
-map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(Plot_Hiest))){
-  the_longitude <-Plot_Hiest[line,"Long"] 
-  the_latitude <-Plot_Hiest[line,"Lat"]
-  the_E <-Plot_Hiest[line,"E"]
-  the_M <-Plot_Hiest[line,"M"]
-  the_F2 <-Plot_Hiest[line,"F2"]
-  the_BCE <-Plot_Hiest[line,"BC.E"]
-  the_BCM <-Plot_Hiest[line,"BC.M"]
-  floating.pie(the_longitude, the_latitude, x=c(the_E,the_M,the_F2,the_BCE,the_BCM), radius=2.5)
-}
+pdf("Triangle_wNA.pdf",useDingbats=FALSE)
+ggplot(wNA_Triangle) +
+  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
+  scale_color_manual(values = c('#CCFF00','#0099CC','#00FF00','#FF00CC','#0000FF')) +
+  theme_classic() +
+  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
+  guides(color=guide_legend("NewHiest9_9"),fill=guide_legend("NewHiest9_9"))+
+  scale_y_continuous(limits=c(0,1)) +
+  scale_x_continuous(limits=c(0,1))
 dev.off()
 
-#western North America
-pdf("wNA_dotsnext.pdf")
+pdf("Triangle_wNA_nolegend.pdf",useDingbats=FALSE)
+ggplot(wNA_Triangle) + 
+  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
+  scale_color_manual(values = c('#FF9900','#0099CC','#FFFF33','#FF00CC','#0000FF')) +
+  theme_classic() +
+  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
+  theme(legend.position = "none") +
+  scale_y_continuous(limits=c(0,1)) +
+  scale_x_continuous(limits=c(0,1))
+dev.off()
+
+
+#plot world
+world_Triangle <- read.csv("Hiest_world9_9.csv", header=TRUE)
+head(world_Triangle)
+ggplot(world_Triangle) +
+  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
+  scale_color_manual(values = c('#FF9900','#0099CC','#FFFF33','#FF00CC','#0000FF')) +
+  theme_classic() +
+  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
+  guides(color=guide_legend("NewHiest9_9"),fill=guide_legend("NewHiest9_9"))+
+  scale_y_continuous(limits=c(0,1)) +
+  scale_x_continuous(limits=c(0,1))
+
+#maps for Hiest
+pdf("Hiest_world.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4), xlim=c(-155,180), ylim=c(-46,65)) #world
+points(world_Triangle$Long , world_Triangle$Lat,
+pch=21, col="black", bg=world_Triangle$NewHiest9_9, cex=0.9)
+dev.off()
+
+#per range next to each other
+pdf("wNA_dotsnext.pdf",useDingbats=FALSE)
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(Plot_Hiest))){
-  the_longitude <-Plot_Hiest[line,"Longplot_H"] 
-  the_latitude <-Plot_Hiest[line,"Latplot_H"]
-  the_k1 <-Plot_Hiest[line,"E"]
-  the_k2 <-Plot_Hiest[line,"M"]
-  the_k3 <-Plot_Hiest[line,"F2"]
-  the_k4 <-Plot_Hiest[line,"BC.E"]
-  the_k5 <-Plot_Hiest[line,"BC.M"]
-  floating.pie(the_longitude, the_latitude, x=c(the_E,the_M,the_F2,the_BCE,the_BCM), radius=0.5)
-}
+points(world_Triangle$Longplot_H, world_Triangle$Latplot_H,
+       pch=21, col="black", bg=world_Triangle$NewHiest9_9, cex=1.5)
 dev.off()
 
-#Australia, mainland
-pdf("AUS_Main_dotsnext.pdf")
+pdf("AUS_Main_dotsnext.pdf",useDingbats=FALSE)
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(112,165),ylim=c(-40,-25))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(Plot_Hiest))){
-  the_longitude <-Plot_Hiest[line,"Longplot_H"] 
-  the_latitude <-Plot_Hiest[line,"Latplot_H"]
-  the_E <-Plot_Hiest[line,"E"]
-  the_M <-Plot_Hiest[line,"M"]
-  the_F2 <-Plot_Hiest[line,"F2"]
-  the_BCE <-Plot_Hiest[line,"BC.E"]
-  the_BCM <-Plot_Hiest[line,"BC.M"]
-  floating.pie(the_longitude, the_latitude, x=c(the_E,the_M,the_F2,the_BCE,the_BCM), radius=0.5)
-}
+points(world_Triangle$Longplot_H, world_Triangle$Latplot_H,
+       pch=21, col="black", bg=world_Triangle$NewHiest9_9, cex=1.25)
 dev.off()
 
-#Australia, Tasmania
-pdf("TAS_dotsnext.pdf")
+pdf("TAS_dotsnext.pdf",useDingbats=FALSE)
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(Plot_Hiest))){
-  the_longitude <-Plot_Hiest[line,"Longplot_H"] 
-  the_latitude <-Plot_Hiest[line,"Latplot_H"]
-  the_E <-Plot_Hiest[line,"E"]
-  the_M <-Plot_Hiest[line,"M"]
-  the_F2 <-Plot_Hiest[line,"F2"]
-  the_BCE <-Plot_Hiest[line,"BC.E"]
-  the_BCM <-Plot_Hiest[line,"BC.M"]
-  floating.pie(the_longitude, the_latitude, x=c(the_E,the_M,the_F2,the_BCE,the_BCM), radius=0.1)
-}
+points(world_Triangle$Longplot_H, world_Triangle$Latplot_H,
+       pch=21, col="black", bg=world_Triangle$NewHiest9_9, cex=1.5)
 dev.off()
 
 ###################################################################################
 #*******************************************************************************#
 #*Spearmans correlation test*#
 #*******************************************************************************#
+
 #change working directory
-#rank of sampling locations, fastStrucutre Q values per population (k5 global thinned dataset) and S values per population as input
-#in AUS only south east mainland Individuals
-AUS_MHE <- read.csv("Pop_rank_AUS_MHE.csv", header=TRUE)
-AUS_MH <- read.csv("Pop_rank_AUS_MH.csv", header=TRUE)
-AUS_fsH <- read.csv("Pop_rank_AUS_FSH.csv", header=TRUE)
-AUS_HiH <- read.csv("Pop_rank_AUS_HIH.csv", header=TRUE)
+#rank of sampling locations, Admixture supervised run Q values per population (global thinned dataset) and S values per population as input (Hiest)
 
-wNA_MHE <- read.csv("Pop_rank_wNA_MHE.csv", header=TRUE)
-wNA_MH <- read.csv("Pop_rank_wNA_MH.csv", header=TRUE)
-wNA_fsH <- read.csv("Pop_rank_wNA_FSH.csv", header=TRUE)
-wNA_HiH <- read.csv("Pop_rank_wNA_HIH.csv", header=TRUE)
+#Spearman test
+AUS_MHE_noLHI<-read.csv("AUS_MHE_SE_wihtoutLHI.csv",header=TRUE)
+AUS_MH_noLHI<-read.csv("AUS_MH_SE_withoutLHI.csv",header=TRUE)
+AUS_H_admix_noLHI<-read.csv("AUS_H_ADMIX_SE_wihtoutLHI.csv",header=TRUE)
+AUS_H_Hiest_noLHI<-read.csv("AUS_H_HIEST_SE_withoutLHI.csv",header=TRUE)
 
-cor.test(AUS_MHE$Q.value,AUS_MHE$rank, method=c("spearman")) 
-cor.test(AUS_MHE$S,AUS_MHE$rank, method=c("spearman")) 
-cor.test(AUS_MH$Q.value,AUS_MH$rank, method=c("spearman"))  
-cor.test(AUS_MH$S,AUS_MH$rank, method=c("spearman"))
-cor.test(AUS_fsH$Q.value,AUS_fsH$rank, method=c("spearman")) 
-cor.test(AUS_HiH$S,AUS_HiH$rank, method=c("spearman")) 
+wNA_MHE_all<-read.csv("wNA_MHE_SE.csv",header=TRUE)
+wNA_MHE_North<-read.csv("wNA_MHE_SE_North.csv",header=TRUE)
+wNA_MH_all<-read.csv("wNA_MH_SE.csv",header=TRUE)
+wNA_MH_North<-read.csv("wNA_MH_SE_North.csv",header=TRUE)
+wNA_H_Admix<-read.csv("wNA_H_admix.csv",header=TRUE)
+wNA_H_Hiest<-read.csv("wNA_H_HIEST.csv",header=TRUE)
 
-cor.test(wNA_MHE$Q.value,wNA_MHE$rank, method=c("spearman")) 
-cor.test(wNA_MHE$S,wNA_MHE$rank, method=c("spearman")) 
-cor.test(wNA_MH$Q.value,wNA_MH$rank, method=c("spearman")) 
-cor.test(wNA_MH$S,wNA_MH$rank, method=c("spearman")) 
-cor.test(wNA_fsH$Q.value,wNA_fsH$rank, method=c("spearman"))
-cor.test(wNA_HiH$S,wNA_HiH$rank, method=c("spearman")) 
 
+cor.test(AUS_MHE_noLHI$k1_QE,AUS_MHE_noLHI$rank, method=c("spearman"))
+cor.test(AUS_MHE_noLHI$S,AUS_MHE_noLHI$rank, method=c("spearman"))
+
+cor.test(AUS_MH_noLHI$k1_QE,AUS_MH_noLHI$rank, method=c("spearman"))
+cor.test(AUS_MH_noLHI$S,AUS_MH_noLHI$rank, method=c("spearman"))
+
+cor.test(AUS_H_admix_noLHI$k1_QE,AUS_H_admix_noLHI$rank, method=c("spearman"))
+cor.test(AUS_H_admix_noLHI$S,AUS_H_admix_noLHI$rank, method=c("spearman"))
+
+cor.test(AUS_H_Hiest_noLHI$k1_QE,AUS_H_Hiest_noLHI$rank, method=c("spearman"))
+cor.test(AUS_H_Hiest_noLHI$S,AUS_H_Hiest_noLHI$rank, method=c("spearman"))
+
+cor.test(wNA_MHE_all$k1_QE,wNA_MHE_all$rank, method=c("spearman"))
+cor.test(wNA_MHE_all$S,wNA_MHE_all$rank, method=c("spearman"))
+
+cor.test(wNA_MHE_North$k1_QE,wNA_MHE_North$rank, method=c("spearman"))
+cor.test(wNA_MHE_North$S,wNA_MHE_North$rank, method=c("spearman"))
+
+cor.test(wNA_MH_all$k1_QE,wNA_MH_all$rank, method=c("spearman"))
+cor.test(wNA_MH_all$S,wNA_MH_all$rank, method=c("spearman"))
+
+cor.test(wNA_MH_North$k1_QE,wNA_MH_North$rank, method=c("spearman"))
+cor.test(wNA_MH_North$S,wNA_MH_North$rank, method=c("spearman"))
+
+cor.test(wNA_H_Admix$k1_QE,wNA_H_Admix$rank, method=c("spearman"))
+cor.test(wNA_H_Admix$S,wNA_H_Admix$rank, method=c("spearman"))
+
+cor.test(wNA_H_Hiest$k1_QE,wNA_H_Hiest$rank_all, method=c("spearman"))
+cor.test(wNA_H_Hiest$S,wNA_H_Hiest$rank_all, method=c("spearman"))
+
+#make plots for AUstralia, Q value MHE, H-Admixture, S vlaue MHE and Admixture, wNA Q value MHE
+MHE_AUS_limited_Q <- ggscatter(AUS_MHE_noLHI, x = "rank", y = "k1_QE", 
+                             add = "reg.line", conf.int = TRUE, 
+                             cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
+                             xlab = "rank", ylab = "Q")
+H_AUS_admixture_Q <- ggscatter(AUS_H_admix_noLHI, x = "rank", y = "k1_QE", 
+                                     add = "reg.line", conf.int = TRUE, 
+                                     cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
+                                     xlab = "rank", ylab = "Q")
+
+MHE_AUS_limited_S <- ggscatter(AUS_MHE_noLHI, x = "rank", y = "S", 
+                               add = "reg.line", conf.int = TRUE, 
+                               cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
+                               xlab = "rank", ylab = "S")
+H_AUS_admixture_S <- ggscatter(AUS_H_admix_noLHI, x = "rank", y = "S", 
+                               add = "reg.line", conf.int = TRUE, 
+                               cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
+                               xlab = "rank", ylab = "S")
+
+wNA_MHE_North_Q <- ggscatter(wNA_MHE_North, x = "rank", y = "k1_QE", 
+                           add = "reg.line", conf.int = TRUE, 
+                           cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
+                           xlab = "rank", ylab = "Q")
+
+pdf("Figure4_22_9_20.pdf",useDingbats=FALSE)
+grid.arrange(MHE_AUS_limited_Q,H_AUS_admixture_Q,wNA_MHE_North_Q,MHE_AUS_limited_S,H_AUS_admixture_S, ncol=3)
+dev.off()
+
+
+#################################################################################
+#*******************************************************************************#
+#***************************Q vs S**********************************************#
+#*******************************************************************************#
+#make an excelsheet per Individual Q from k1_E admixture supervised and S from HIest 
+QS <- read.csv("QvsS11_9_20.csv",header=TRUE)
+head(QS)
+library(ggplot2)
+
+#plot and colour after classficaiton per program
+pdf("QS_HIest_noL.pdf",useDingbats=FALSE)
+Q2 <- ggplot(QS, aes(x=K1_E, y=S, color=NewHiest9_9)) + geom_point()+theme_classic()+ theme(legend.position="none")
+dev.off()
+
+pdf("QS_admixtureSE_noL.pdf",useDingbats=FALSE)
+Q3 <- ggplot(QS, aes(x=K1_E, y=S, color=Species_SE_admixture)) + geom_point()+theme_classic()+ theme(legend.position="none")
+dev.off()
+
+pdf("QS_admixtureCI_noL.pdf",useDingbats=FALSE)
+Q4 <- ggplot(QS, aes(x=K1_E, y=S, color=Species_admixture_CI)) + geom_point()+theme_classic()+ theme(legend.position="none")
+dev.off()
+
+pdf("QS_NewHybrids_noL.pdf",useDingbats=FALSE)
+Q1 <-ggplot(QS, aes(x=K1_E, y=S, color=NewHybrids.Species)) + geom_point()+ theme_classic()+ theme(legend.position="none")
+dev.off()
+
+pdf("QS_all_noL.pdf",useDingbats=FALSE)
+grid.arrange(Q1,Q2,Q3,Q4, ncol=2)
+dev.off()
+
+################################################################################
+#alginer comparison with Admixture classification#
+################################################################
+
+unfiltered <- read.csv ("unfiltered_10_9_20.csv",header=TRUE,stringsAsFactors = FALSE)
+filtered  <- read.csv ("filtered_10_9_20.csv",header=TRUE)
+
+p1 <- ggplot(unfiltered, aes(x=Species_SE_admixture, y=BWAPercent,color=Species_SE_admixture)) +  ylab("BWA_unfiltered_missing %") +
+  geom_boxplot() + ylim(0,100)+ theme(plot.title = element_text(hjust = 0.5,size=12, face='bold')) +
+  scale_color_manual(values = c("#66FF00","#CC00CC","#3333FF"),aesthetics = "colour") +theme_classic()
+
+p2 <- ggplot(unfiltered, aes(x=Species_SE_admixture, y=NextGenpercent,color=Species_SE_admixture)) +  ylab("Nextgen_unfiltered_missing %") +
+  geom_boxplot() + ylim(0,100) + theme(plot.title = element_text(hjust = 0.5,size=12, face='bold')) +
+  scale_color_manual(values = c("#66FF00","#CC00CC","#3333FF"),aesthetics = "colour") +theme_classic()
+
+p3 <- ggplot(filtered, aes(x=Species_SE_admixture, y=BWA_Percent,color=Species_SE_admixture)) +  ylab("BWA_filtered_missing %") +
+  geom_boxplot()+ylim(0,100) + theme(plot.title = element_text(hjust = 0.5,size=12, face='bold')) +
+  scale_color_manual(values = c("#66FF00","#CC00CC","#3333FF"),aesthetics = "colour") +theme_classic()
+
+p4 <- ggplot(filtered, aes(x=Species_SE_admixture, y=NextGen_percent,color=Species_SE_admixture)) +  ylab("Nextgen_filtered_missing %") +
+  geom_boxplot()+ ylim(0,100) + theme(plot.title = element_text(hjust = 0.5,size=12, face='bold'))+
+  scale_color_manual(values = c("#66FF00","#CC00CC","#3333FF"),aesthetics = "colour") +theme_classic()
+  
+pdf("Alignerbias.pdf",useDingbats=FALSE)
+grid.arrange(p1,p2,p3,p4, ncol=2)
+dev.off()
+
+#reads mapped/unmapped
+mapped_unmapped_all <- read.csv("all_mapped_unmapped14_9_20.csv", header=TRUE,stringsAsFactors = FALSE)
+
+p1 <- ggplot(mapped_unmapped_all, aes(x=Species_SE_admixture, y=percent_highmapped_totoalmapped,color=Species_SE_admixture)) +  ylab("%_highmapped_totoalmapped") +
+  geom_boxplot() + ylim(0,100)+ theme(plot.title = element_text(hjust = 0.5,size=12, face='bold')) +
+  scale_color_manual(values = c("#66FF00","#CC00CC","#3333FF"),aesthetics = "colour") +theme_classic()
+
+pdf("Read_mapped_unampped.pdf",useDingbats=FALSE)
+grid.arrange(p1, ncol=1)
+dev.off()
+
+################################################################################################################
+#sampling map#
+################################################################################################################
+sampling <- read.csv("sampling_map18_9_20.csv", header=TRUE)
+#world
+pdf("Sampling_world.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4), xlim=c(-155,180), ylim=c(-46,75)) #world
+points(sampling$Long , sampling$Lat,
+       pch=21, col="orange",bg="orange", cex=0.9)
+dev.off()
+
+#wNA
+pdf("Sampling_wNA.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(sampling$Long , sampling$Lat,
+       pch=21, col="orange",bg="orange", cex=1.2)
+dev.off()
+
+#eNA
+pdf("Sampling_eNA.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-100, -47), ylim = c(40, 52))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(sampling$Long , sampling$Lat,
+       pch=21, col="orange",bg="orange", cex=1.2)
+dev.off()
+
+# EU
+pdf("Sampling_EUwith Iceland.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim = c(-24, 45),ylim = c(25, 75))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(sampling$Long , sampling$Lat,
+       pch=21, col="orange",bg="orange", cex=1.3)
+dev.off()
+
+#Australia mainland and New Zealand
+pdf("Sampling_Australiamian.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim = c(110, 180), ylim = c(-46.5, -26)) 
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(sampling$Long , sampling$Lat,
+       pch=21, col="orange",bg="orange", cex=1.3)
+dev.off()
+
+#Australia- Tasmania
+pdf("Sampling_Tasi.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40.7))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(sampling$Long , sampling$Lat,
+       pch=21, col="orange",bg="orange", cex=1.3)
+dev.off()
 #################################################################################
 #*******************************************************************************#
 #*************Population statistik on global thinned dataset********************#
@@ -892,12 +604,10 @@ cor.test(wNA_HiH$S,wNA_HiH$rank, method=c("spearman"))
 #use PGD spider to convert vcf file into Genpop file with the pooled groups as population 
 #make sure that Genpop file has a title
 #change working directory
-#use basicStats for AR_CI
-#use divBasic for FIS_CI
 
-basicStats(infile = "Genepop_18_4_20.txt", 
-           outfile = "basicStats_18_4", fis_ci = F,
+basicStats(infile = "Genepop_SE_4_9_20.txt", 
+           outfile = "basicStats_9_4_SE", fis_ci = F,
            ar_ci = TRUE, ar_boots = 1000,
            mc_reps = 9999, rarefaction = FALSE, ar_alpha = 0.05)
 
-divBasic(infile = "Genepop_18_4_20.txt", outfile = 'DivBasic_18_4', gp = 3, bootstraps = 1000)
+divBasic(infile = "Genepop_SE_4_9_20.txt", outfile = 'DivBasic_4_9_SE', gp = 3, bootstraps = 1000)
