@@ -319,21 +319,16 @@ for K in 2 3 4 5 6 7 8 9 10; \
 do ./admixture \
 -B1000 \
 --cv=10 \
+-s time \
+-j10 \
 -C 0.0000000001 \
-~/Admixture//GBSCAK_9_3_20_noUN_nohet_1000_noL.bed \
+~/Admixture/GBSCAK_9_3_20_noUN_nohet_1000_noL.bed \
 $K | tee log${K}.out; \
 done
 
 #supervised run
-for K in 2; \
-do admixture \
--B1000 \
---cv=10 \
---supervised \
--C 0.0000000001 \
-~Admixture/GBSCAK_9_3_20_noUN_nohet_1000_noL.bed \
-$K | tee log${K}.out; \
-done
+./admixture -B1000 --supervised -C 0.0000000001 /home/hros0002/om62_scratch/Admixture/test_boot/GBSCAK_9_3_20_noUN_nohet_1000_noL.bed 2
+
 ##########################################################################################
 #*******************************************************#
 #*fixed differences between C. edentula and C. maritima*#
