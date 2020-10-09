@@ -498,10 +498,6 @@ pdf("QS_admixtureSE_noL.pdf",useDingbats=FALSE)
 Q3 <- ggplot(QS, aes(x=K1_E, y=S, color=Species_SE_admixture)) + geom_point()+theme_classic()+ theme(legend.position="none")
 dev.off()
 
-pdf("QS_admixtureCI_noL.pdf",useDingbats=FALSE)
-Q4 <- ggplot(QS, aes(x=K1_E, y=S, color=Species_admixture_CI)) + geom_point()+theme_classic()+ theme(legend.position="none")
-dev.off()
-
 pdf("QS_NewHybrids_noL.pdf",useDingbats=FALSE)
 Q1 <-ggplot(QS, aes(x=K1_E, y=S, color=NewHybrids.Species)) + geom_point()+ theme_classic()+ theme(legend.position="none")
 dev.off()
@@ -610,5 +606,3 @@ basicStats(infile = "Genepop_SE_4_9_20.txt",
            outfile = "basicStats_9_4_SE", fis_ci = F,
            ar_ci = TRUE, ar_boots = 1000,
            mc_reps = 9999, rarefaction = FALSE, ar_alpha = 0.05)
-
-divBasic(infile = "Genepop_SE_4_9_20.txt", outfile = 'DivBasic_4_9_SE', gp = 3, bootstraps = 1000)
