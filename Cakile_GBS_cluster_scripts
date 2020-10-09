@@ -327,7 +327,7 @@ $K | tee log${K}.out; \
 done
 
 #supervised run
-./admixture -B1000 --supervised -C 0.0000000001 /home/hros0002/om62_scratch/Admixture/test_boot/GBSCAK_9_3_20_noUN_nohet_1000_noL.bed 2
+./admixture -B1000 --supervised -C 0.0000000001 ./Admixture/GBSCAK_9_3_20_noUN_nohet_1000_noL.bed 2
 
 ##########################################################################################
 #*******************************************************#
