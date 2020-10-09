@@ -240,21 +240,24 @@ dev.off()
 #*******************Newhybrids****************#
 #*********************************************#
 #change working directory
-#choose 300 fixed differences by random
-Allfixeddiff <- read.table("484_fixed_10_3_20")
-random_SNP <- sample_n(Allfixeddiff ,300)
-write.table(random_SNP, "random_SNP_10_3_29.txt", append = FALSE, sep = "\t", dec = ".",
+####choose 300 fixed differences by random
+####Allfixeddiff <- read.table("484_fixed_10_3_20")
+####random_SNP <- sample_n(Allfixeddiff ,300)
+####write.table(random_SNP, "random_SNP_10_3_29.txt", append = FALSE, sep = "\t", dec = ".",
             row.names = FALSE, col.names = FALSE, quote = FALSE)
 
+#use the 63 SNPs from HIest
 #filter vcf file so that only those SNPs are left
 #run Newhybrids outside of R in terminal
+
 
 ############################################################################################################
 #*********************************************#
 #****HIest************************************#
 #*********************************************#
 #change working directory
-#data preperation on cluster using vcftools, keep only fixed differences between species
+#data preperation on cluster using vcftools, keep only fixed differences between species from native ranges(471 SNPs)
+#and prepare dataset for fixed differences between pure species identified by Admixture (63 SNPs)
 vcftools --vcf GBSCAK_9_3_20_noUN_nohet_noL.recode.vcf \
 --positions filter_10_3_20.txt \
 --012 \
@@ -263,7 +266,7 @@ vcftools --vcf GBSCAK_9_3_20_noUN_nohet_noL.recode.vcf \
 #substitute missing data from -1 to NA
 sed 's/-1/NA/g' GBSfixed17_4_20.012 > GBSfixed17_4_20.012NA
 
-#prepare parental frequency .csv with 0.99 and 0.03
+#prepare parental frequency .csv with 0.99 and 0.03 for 471 SNPs, and 0.99 and 0.06 for 471 SNPs, and 1 and 0 for 63 SNPs, run below three times for each dataset once
 load genotype data
 gcak<-read.csv("geno_fixed_diff.csv", 
                stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA","") )
@@ -278,9 +281,7 @@ HI.class <- HIclass(gcak,pcak,type="allele.count")
 Cak.test <- HItest(HI.class,HI, thresholds = c(2,2))
 
 table(Cak.test$c1)
-# all 254 TRUE, 3 FALSE, meaning the best classification is at least 2 log-likelihood units better than the next best
 table(Cak.test$c2)
-#121 FALSE 136 TRUE
 cakmerged_9_9_20 <- data.frame(name = gcak$sample,
                         H = HI$H, 
                         S = HI$S, 
@@ -304,7 +305,7 @@ write.csv(cakmerged_9_9_20, file = "HIest9_9_20.csv", append = FALSE, quote = TR
           col.names = TRUE, qmethod = c("escape", "double"),
           fileEncoding = "")
 
-#plot Hiest, triangle and maps
+#plot Hiest, triangle and maps, plot 63 SNPs
 #make csv files with only wNA and only AUS
 #trianlge
 AUS_Triangle <- read.csv("Hiest_AUS_9_9.csv", header=TRUE)
