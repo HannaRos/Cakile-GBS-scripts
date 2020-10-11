@@ -10,7 +10,7 @@ Text file containing details of all the scripts and commands used in the cluster
  -SNP filtering commands
  -Commands to detect fixed differences between the two species
  -Splitstree filtering
- -File preparation for fastStructure
+ -File preparation for Admixture
 
 GBS_fastq_Demultiplexer_v9_2Enyzme2barcode.pl & CP1aCP2.txt & CP3aCP4.txt:
 -This script uses raw paired end fastq files and a list of barcodes of samples names to demultiplex them into individual samples files. It also removes barcodes. 
@@ -20,11 +20,9 @@ FQ_pair_np.pl:
 
 GBS_Cakile_R:
 Text file containing the R script used for analysis and visualisation
--PCA and faststructure visualisation for the global thinned dataset
--PCA and faststructure visualisation for the C. edentula native range dataset
--Faststructure visualisation for the C. edentula global dataset
--PCA and faststructure visualisation for the C. maritima native range dataset
+-PCA and Admixture visualisation for the global thinned dataset
 -selection of SNPs for Newhybrids
 -HIest data preparation, analysis and visualisation
 -Spearman correlation test
 -Population statistic on global thinned dataset
+-Treemix analysis
