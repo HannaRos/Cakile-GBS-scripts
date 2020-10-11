@@ -429,75 +429,90 @@ dev.off()
 #rank of sampling locations, Admixture supervised run Q values per population (global thinned dataset) and S values per population as input (Hiest)
 
 #Spearman test
+#Q Admixture
 AUS_MHE_noLHI<-read.csv("AUS_MHE_SE_wihtoutLHI.csv",header=TRUE)
 AUS_MH_noLHI<-read.csv("AUS_MH_SE_withoutLHI.csv",header=TRUE)
 AUS_H_admix_noLHI<-read.csv("AUS_H_ADMIX_SE_wihtoutLHI.csv",header=TRUE)
-AUS_H_Hiest_noLHI<-read.csv("AUS_H_HIEST_SE_withoutLHI.csv",header=TRUE)
-
 wNA_MHE_all<-read.csv("wNA_MHE_SE.csv",header=TRUE)
 wNA_MHE_North<-read.csv("wNA_MHE_SE_North.csv",header=TRUE)
 wNA_MH_all<-read.csv("wNA_MH_SE.csv",header=TRUE)
 wNA_MH_North<-read.csv("wNA_MH_SE_North.csv",header=TRUE)
 wNA_H_Admix<-read.csv("wNA_H_admix.csv",header=TRUE)
-wNA_H_Hiest<-read.csv("wNA_H_HIEST.csv",header=TRUE)
 
+#S-HIest
+MHE_AUS_471_63<- read.csv("Hiest_1_10_20/MHE_AUS_471_63_S.csv", header=TRUE)
+MHE_wNA_471_63<- read.csv("MHE_wNA_471_63_S.csv", header=TRUE)
+MHE_wNA_471_63_North <- read.csv("MHE_wNA_NORTH_471_63_S.csv", header=TRUE)
+MH_AUS_471<- read.csv("MH_AUS_471_S.csv", header=TRUE)
+MH_wNA_471<- read.csv("MH_wNA_471_S.csv", header=TRUE)
+MH_wNA_471_North <- read.csv("MH_wNA_NORTH_471.csv", header=TRUE)
+H_AUS_471<- read.csv("H_AUS_471_S.csv", header=TRUE)
+H_wNA_471<- read.csv("H_wNA_471_S.csv", header=TRUE)
+H_wNA_471_North<- read.csv("H_wNA_NORTH_471_S.csv", header=TRUE)
+MH_AUS_63<- read.csv("MH_AUS_63_S.csv", header=TRUE)
+MH_wNA_63<- read.csv("MH_wNA_63_S.csv", header=TRUE)
+MH_wNA_63_North<- read.csv("MH_wNA_NORTH_63_S.csv", header=TRUE)
+H_AUS_63<- read.csv("H_AUS_63_S.csv", header=TRUE)
+H_wNA_63<- read.csv("H_wNA_63_S.csv", header=TRUE)
+H_wNA_63_North<- read.csv("H_wNA_NORTH_63_S.csv", header=TRUE)
 
+#S corrrelation
+cor.test(MHE_AUS_471_63$X471_S,MHE_AUS_471_63$rank, method=c("spearman"))
+cor.test(MHE_AUS_471_63$X63_S,MHE_AUS_471_63$rank, method=c("spearman"))
+cor.test(MHE_wNA_471_63$X471_S,MHE_wNA_471_63$rank, method=c("spearman"))
+cor.test(MHE_wNA_471_63$X63_S,MHE_wNA_471_63$rank, method=c("spearman"))
+cor.test(MHE_wNA_471_63_North$X471_S,MHE_wNA_471_63_North$rank, method=c("spearman"))
+cor.test(MHE_wNA_471_63_North$X63_S,MHE_wNA_471_63_North$rank, method=c("spearman"))
+cor.test(MH_AUS_471$X471_S,MH_AUS_471$rank, method=c("spearman"))
+cor.test(MH_wNA_471$X471_S,MH_wNA_471$rank, method=c("spearman"))
+cor.test(MH_wNA_471_North$X471_S,MH_wNA_471_North$rank, method=c("spearman"))
+cor.test(H_AUS_471$X471_S,H_AUS_471$rank, method=c("spearman"))
+cor.test(H_wNA_471$X471_S,H_wNA_471$rank, method=c("spearman"))
+cor.test(H_wNA_471_North$X471_S,H_wNA_471_North$rank, method=c("spearman"))
+cor.test(MH_AUS_63$X63_S,MH_AUS_63$rank, method=c("spearman"))
+cor.test(MH_wNA_63$X63_S,MH_wNA_63$rank, method=c("spearman"))
+cor.test(MH_wNA_63_North$X63_S,MH_wNA_63_North$rank, method=c("spearman"))
+cor.test(H_AUS_63$X63_S,H_AUS_63$rank, method=c("spearman"))
+cor.test(H_wNA_63$X63_S,H_wNA_63$rank, method=c("spearman"))
+cor.test(H_wNA_63_North$X63_S,H_wNA_63_North$rank, method=c("spearman"))
+
+#Q correlation
 cor.test(AUS_MHE_noLHI$k1_QE,AUS_MHE_noLHI$rank, method=c("spearman"))
-cor.test(AUS_MHE_noLHI$S,AUS_MHE_noLHI$rank, method=c("spearman"))
-
 cor.test(AUS_MH_noLHI$k1_QE,AUS_MH_noLHI$rank, method=c("spearman"))
-cor.test(AUS_MH_noLHI$S,AUS_MH_noLHI$rank, method=c("spearman"))
-
 cor.test(AUS_H_admix_noLHI$k1_QE,AUS_H_admix_noLHI$rank, method=c("spearman"))
-cor.test(AUS_H_admix_noLHI$S,AUS_H_admix_noLHI$rank, method=c("spearman"))
-
 cor.test(AUS_H_Hiest_noLHI$k1_QE,AUS_H_Hiest_noLHI$rank, method=c("spearman"))
-cor.test(AUS_H_Hiest_noLHI$S,AUS_H_Hiest_noLHI$rank, method=c("spearman"))
-
 cor.test(wNA_MHE_all$k1_QE,wNA_MHE_all$rank, method=c("spearman"))
-cor.test(wNA_MHE_all$S,wNA_MHE_all$rank, method=c("spearman"))
-
 cor.test(wNA_MHE_North$k1_QE,wNA_MHE_North$rank, method=c("spearman"))
-cor.test(wNA_MHE_North$S,wNA_MHE_North$rank, method=c("spearman"))
-
 cor.test(wNA_MH_all$k1_QE,wNA_MH_all$rank, method=c("spearman"))
-cor.test(wNA_MH_all$S,wNA_MH_all$rank, method=c("spearman"))
-
 cor.test(wNA_MH_North$k1_QE,wNA_MH_North$rank, method=c("spearman"))
-cor.test(wNA_MH_North$S,wNA_MH_North$rank, method=c("spearman"))
-
 cor.test(wNA_H_Admix$k1_QE,wNA_H_Admix$rank, method=c("spearman"))
-cor.test(wNA_H_Admix$S,wNA_H_Admix$rank, method=c("spearman"))
-
 cor.test(wNA_H_Hiest$k1_QE,wNA_H_Hiest$rank_all, method=c("spearman"))
-cor.test(wNA_H_Hiest$S,wNA_H_Hiest$rank_all, method=c("spearman"))
 
-#make plots for AUstralia, Q value MHE, H-Admixture, S vlaue MHE and Admixture, wNA Q value MHE
-MHE_AUS_limited_Q <- ggscatter(AUS_MHE_noLHI, x = "rank", y = "k1_QE", 
+
+#plot significant values
+MHE_AUS_Admixture_SE <- ggscatter(AUS_MHE_noLHI, x = "rank", y = "k1_QE", 
+                          add = "reg.line", conf.int = TRUE, 
+                          cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
+                          xlab = "rank", ylab = "S")
+MHE_AUS_63_S <- ggscatter(MHE_AUS_471_63, x = "rank", y = "X63_S", 
                              add = "reg.line", conf.int = TRUE, 
-                             cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
-                             xlab = "rank", ylab = "Q")
-H_AUS_admixture_Q <- ggscatter(AUS_H_admix_noLHI, x = "rank", y = "k1_QE", 
-                                     add = "reg.line", conf.int = TRUE, 
-                                     cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
-                                     xlab = "rank", ylab = "Q")
+                             cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
+                             xlab = "rank", ylab = "S")                         
+H_AUS_Admixture_SE_Hybrid<- ggscatter(AUS_H_admix_noLHI, x = "rank", y = "k1_QE", 
+                                       add = "reg.line", conf.int = TRUE, 
+                                       cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
+                                       xlab = "rank", ylab = "S")                             
+MHE_wNA_North_Admixture_SE<- ggscatter(wNA_MHE_North, x = "rank", y = "k1_QE", 
+                                add = "reg.line", conf.int = TRUE, 
+                                cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
+                                xlab = "rank", ylab = "S")
+MHE_wNA_North_63_S <- ggscatter(MHE_wNA_471_63_North, x = "rank", y = "X63_S", 
+                          add = "reg.line", conf.int = TRUE, 
+                          cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
+                          xlab = "rank", ylab = "S")
 
-MHE_AUS_limited_S <- ggscatter(AUS_MHE_noLHI, x = "rank", y = "S", 
-                               add = "reg.line", conf.int = TRUE, 
-                               cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
-                               xlab = "rank", ylab = "S")
-H_AUS_admixture_S <- ggscatter(AUS_H_admix_noLHI, x = "rank", y = "S", 
-                               add = "reg.line", conf.int = TRUE, 
-                               cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
-                               xlab = "rank", ylab = "S")
-
-wNA_MHE_North_Q <- ggscatter(wNA_MHE_North, x = "rank", y = "k1_QE", 
-                           add = "reg.line", conf.int = TRUE, 
-                           cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.35),
-                           xlab = "rank", ylab = "Q")
-
-pdf("Figure4_22_9_20.pdf",useDingbats=FALSE)
-grid.arrange(MHE_AUS_limited_Q,H_AUS_admixture_Q,wNA_MHE_North_Q,MHE_AUS_limited_S,H_AUS_admixture_S, ncol=3)
+pdf("Spearman_5_10_20.pdf",useDingbats=FALSE)
+grid.arrange(MHE_AUS_Admixture_SE,MHE_AUS_63_S,H_AUS_Admixture_SE_Hybrid,MHE_wNA_North_Admixture_SE,MHE_wNA_North_63_S, ncol=3)
 dev.off()
 
 
