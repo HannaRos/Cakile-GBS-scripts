@@ -278,7 +278,7 @@ HI <- HIest(gcak,pcak,type="allele.count", iterations=99,surf=TRUE,startgrid=20)
 HI.class <- HIclass(gcak,pcak,type="allele.count")
 
 # compare classification with maximum likelihood estimates
-Cak.test <- HItest(HI.class,HI, thresholds = c(2,2))
+Cak.test <- HItest(HI.class,HI, thresholds = c(2,1))
 
 table(Cak.test$c1)
 table(Cak.test$c2)
@@ -308,97 +308,118 @@ write.csv(cakmerged_9_9_20, file = "HIest9_9_20.csv", append = FALSE, quote = TR
 #plot Hiest, triangle and maps, plot 63 SNPs
 #make csv files with only wNA and only AUS
 #trianlge
-AUS_Triangle <- read.csv("Hiest_AUS_9_9.csv", header=TRUE)
-wNA_Triangle <- read.csv("HIest_wNA_9_9.csv", header=TRUE)
+Triangel_AUS_2_10_20 <- read.csv("Triangle_AUS_Hiest63_2_10_20.csv", header=TRUE)
+Triangle_wNA_2_10_20 <- read.csv("Triangle_wNA_HIest_63_2_10_20.csv", header=TRUE)
 head(AUS_Triangle)
 
-pdf("Triangle_AUS.pdf",useDingbats=FALSE)
-ggplot(AUS_Triangle) +
-  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
-  scale_color_manual(values = c('#FF9900','#0099CC','#FFFF33','#FF00CC','#0000FF')) +
+pdf("Triangle_Hiest_2_10_20.pdf",useDingbats=FALSE)
+p1 <- ggplot(Triangle_wNA_2_10_20) +
+  geom_point(aes(x=S, y=H, color=factor(colour)), size=5, shape=20) +
+  scale_color_manual(values = c('#CCFF00','#0099CC','#00FF00')) +
   theme_classic() +
   theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  guides(color=guide_legend("NewHiest9_9"),fill=guide_legend("NewHiest9_9"))+
+  guides(color=guide_legend("colour"), fill=guide_legend("colour"))+
   scale_y_continuous(limits=c(0,1)) +
   scale_x_continuous(limits=c(0,1))
-dev.off()
-
-pdf("Triangle_AUS_nolegend.pdf",useDingbats=FALSE)
-ggplot(AUS_Triangle) + 
-  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
-  scale_color_manual(values = c('#FF9900','#0099CC','#FFFF33','#FF00CC','#0000FF')) +
+p2 <- ggplot(Triangel_AUS_2_10_20) +
+  geom_point(aes(x=S, y=H, color=factor(colour)), size=5, shape=20) +
+  scale_color_manual(values = c('#CCFF00','#0099CC','#00FF00','black')) +
   theme_classic() +
   theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  theme(legend.position = "none") +
+  guides(color=guide_legend("colour"),fill=guide_legend("colour"))+
   scale_y_continuous(limits=c(0,1)) +
   scale_x_continuous(limits=c(0,1))
+grid.arrange(p1,p2, ncol=2)
 dev.off()
-
-
-pdf("Triangle_wNA.pdf",useDingbats=FALSE)
-ggplot(wNA_Triangle) +
-  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
-  scale_color_manual(values = c('#CCFF00','#0099CC','#00FF00','#FF00CC','#0000FF')) +
-  theme_classic() +
-  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  guides(color=guide_legend("NewHiest9_9"),fill=guide_legend("NewHiest9_9"))+
-  scale_y_continuous(limits=c(0,1)) +
-  scale_x_continuous(limits=c(0,1))
-dev.off()
-
-pdf("Triangle_wNA_nolegend.pdf",useDingbats=FALSE)
-ggplot(wNA_Triangle) + 
-  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
-  scale_color_manual(values = c('#FF9900','#0099CC','#FFFF33','#FF00CC','#0000FF')) +
-  theme_classic() +
-  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  theme(legend.position = "none") +
-  scale_y_continuous(limits=c(0,1)) +
-  scale_x_continuous(limits=c(0,1))
-dev.off()
-
 
 #plot world
-world_Triangle <- read.csv("Hiest_world9_9.csv", header=TRUE)
-head(world_Triangle)
-ggplot(world_Triangle) +
-  geom_point(aes(x=S, y=H, color=factor(NewHiest9_9)), size=5, shape=20) +
-  scale_color_manual(values = c('#FF9900','#0099CC','#FFFF33','#FF00CC','#0000FF')) +
-  theme_classic() +
-  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  guides(color=guide_legend("NewHiest9_9"),fill=guide_legend("NewHiest9_9"))+
-  scale_y_continuous(limits=c(0,1)) +
-  scale_x_continuous(limits=c(0,1))
+PlotHiest_NewHybrids_63 <- read.csv ("Plot_Hiest_63_1_0_NewHybrids_2_10_20.csv",header=TRUE)
 
 #maps for Hiest
-pdf("Hiest_world.pdf",useDingbats=FALSE)
+pdf("PlotHiest_63_2_10_20.pdf")
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4), xlim=c(-155,180), ylim=c(-46,65)) #world
-points(world_Triangle$Long , world_Triangle$Lat,
-pch=21, col="black", bg=world_Triangle$NewHiest9_9, cex=0.9)
+for (line in (1:nrow(PlotHiest_NewHybrids_63))){
+  the_longitude <-PlotHiest_NewHybrids_63[line,"Long"] 
+  the_latitude <-PlotHiest_NewHybrids_63[line,"Lat"]
+  the_k1 <-PlotHiest_NewHybrids_63[line,"S_plot"]
+  the_k2 <-PlotHiest_NewHybrids_63[line,"X1.S_plot"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=1.8, col = c("yellow","blue"))
+}
+dev.off()
+
+pdf("westernNorthAmerica_Hiest63_2_10_20.pdf")
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+for (line in (1:nrow(PlotHiest_NewHybrids_63))){
+  the_longitude <-PlotHiest_NewHybrids_63[line,"Longplot_H"] 
+  the_latitude <-PlotHiest_NewHybrids_63[line,"Latplot_H"]
+  the_k1 <-PlotHiest_NewHybrids_63[line,"S_plot"]
+  the_k2 <-PlotHiest_NewHybrids_63[line,"X1.S_plot"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=0.4, col = c("yellow","blue"))
+}
+dev.off()
+
+pdf("AUstraliamain_Hiest63_2_10_20.pdf")
+PlotHiest_NewHybrids_63 <- read.csv ("Plot_Hiest_63_1_0_NewHybrids_2_10_20.csv",header=TRUE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(112,165),ylim=c(-40,-25))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+for (line in (1:nrow(PlotHiest_NewHybrids_63))){
+  the_longitude <-PlotHiest_NewHybrids_63[line,"Longplot_H"] 
+  the_latitude <-PlotHiest_NewHybrids_63[line,"Latplot_H"]
+  the_k1 <-PlotHiest_NewHybrids_63[line,"S_plot"]
+  the_k2 <-PlotHiest_NewHybrids_63[line,"X1.S_plot"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=0.4, col = c("yellow","blue"))
+}
+dev.off()
+
+pdf("TAS_Hiest63_2_10_20.pdf")
+PlotHiest_NewHybrids_63 <- read.csv ("Plot_Hiest_63_1_0_NewHybrids_2_10_20.csv",header=TRUE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+for (line in (1:nrow(PlotHiest_NewHybrids_63))){
+  the_longitude <-PlotHiest_NewHybrids_63[line,"Longplot_H"] 
+  the_latitude <-PlotHiest_NewHybrids_63[line,"Latplot_H"]
+  the_k1 <-PlotHiest_NewHybrids_63[line,"S_plot"]
+  the_k2 <-PlotHiest_NewHybrids_63[line,"X1.S_plot"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=0.08, col = c("yellow","blue"))
+}
+dev.off()
+
+###################################################################################
+#*******************************************************************************#
+#*NewHybrid plotting*#
+#*******************************************************************************#
+#plot NewHybrids on map 63 SNPs
+NewHybrid <-read.csv("NewHybrids_63_29_9_20_plot.csv", header=TRUE)
+head(NewHybrid)
+pdf("NewHybrids_dotsNext_wNA.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(NewHybrid$Latplot_H, NewHybrid$Longplot_H,
+       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.5)
 dev.off()
 
 #per range next to each other
-pdf("wNA_dotsnext.pdf",useDingbats=FALSE)
+pdf("NewHybrid_wNA_dotsnext_t.pdf",useDingbats=FALSE)
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-points(world_Triangle$Longplot_H, world_Triangle$Latplot_H,
-       pch=21, col="black", bg=world_Triangle$NewHiest9_9, cex=1.5)
+points(NewHybrid$Longplot_H, NewHybrid$Latplot_H,
+       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.25)
 dev.off()
 
-pdf("AUS_Main_dotsnext.pdf",useDingbats=FALSE)
+pdf("NewHybrid_AUS_Main_dotsnext.pdf",useDingbats=FALSE)
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(112,165),ylim=c(-40,-25))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-points(world_Triangle$Longplot_H, world_Triangle$Latplot_H,
-       pch=21, col="black", bg=world_Triangle$NewHiest9_9, cex=1.25)
+points(NewHybrid$Longplot_H, NewHybrid$Latplot_H,
+       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.25)
 dev.off()
 
-pdf("TAS_dotsnext.pdf",useDingbats=FALSE)
+pdf("NewHybrid_TAS_dotsnext.pdf",useDingbats=FALSE)
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-points(world_Triangle$Longplot_H, world_Triangle$Latplot_H,
-       pch=21, col="black", bg=world_Triangle$NewHiest9_9, cex=1.5)
+points(NewHybrid$Longplot_H, NewHybrid$Latplot_H,
+       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.5)
 dev.off()
-
 ###################################################################################
 #*******************************************************************************#
 #*Spearmans correlation test*#
@@ -606,3 +627,46 @@ basicStats(infile = "Genepop_SE_4_9_20.txt",
            outfile = "basicStats_9_4_SE", fis_ci = F,
            ar_ci = TRUE, ar_boots = 1000,
            mc_reps = 9999, rarefaction = FALSE, ar_alpha = 0.05)
+################################################################################
+#Treemix#
+################################################################
+##convert vcf to treemix with python script e.g.:
+#Individuals grouped after phenotype and origin
+#run python on cluster
+python vcf2treemix.py -vcf AUS_Home_30_9_20.recode.vcf -pop Popfile_AUS_M_split 
+python vcf2treemix.py -vcf wNA_Home_30_9_20.recode.vcf -pop Popfile_wNA_M_split
+
+#run Treemix maximum likelihood trees
+#run Treemix on terminal
+treemix -i AUS_Home_30_9_20_M_split.tmix.gz -o AUS_Home_30_9_20_M_split_m0 
+treemix -i AUS_Home_30_9_20_M_split.tmix.gz -o AUS_Home_30_9_20_M_split_m1 -m 1
+treemix -i AUS_Home_30_9_20_M_split.tmix.gz -o AUS_Home_30_9_20_M_split_m2 -m 2
+treemix -i AUS_Home_30_9_20_M_split.tmix.gz -o AUS_Home_30_9_20_M_split_m3 -m 3
+treemix -i AUS_Home_30_9_20_M_split.tmix.gz -o AUS_Home_30_9_20_M_split_m4 -m 4
+
+treemix -i wNA_Home_30_9_20_M_split.tmix.gz -o wNA_Home_30_9_20_M_split_m0 
+treemix -i wNA_Home_30_9_20_M_split.tmix.gz -o wNA_Home_30_9_20_M_split_m1 -m 1
+treemix -i wNA_Home_30_9_20_M_split.tmix.gz -o wNA_Home_30_9_20_M_split_m2 -m 2
+treemix -i wNA_Home_30_9_20_M_split.tmix.gz -o wNA_Home_30_9_20_M_split_m3 -m 3
+treemix -i wNA_Home_30_9_20_M_split.tmix.gz -o wNA_Home_30_9_20_M_split_m4 -m 4
+#visulize in R
+source("./treemix-1.13-hd7c151e_1/bin/plotting_funcs.R")
+plot_tree("AUS_Home_30_9_20_M_split_m0 ")
+plot_tree("AUS_Home_30_9_20_M_split_m1")
+plot_tree("AUS_Home_30_9_20_M_split_m2")
+plot_tree("AUS_Home_30_9_20_M_split_m3")
+plot_tree("AUS_Home_30_9_20_M_split_m4")
+
+plot_tree("wNA_Home_30_9_20_M_split_m0")
+plot_tree("wNA_Home_30_9_20_M_split_m1")
+plot_tree("wNA_Home_30_9_20_M_split_m2")
+plot_tree("wNA_Home_30_9_20_M_split_m3")
+plot_tree("wNA_Home_30_9_20_M_split_m4")
+
+#run Treemix 3pop test
+threepop -i AUS_Home_30_9_20_M_split.tmix.gz -k 500
+threepop -i wNA_Home_30_9_20_M_split.tmix.gz -k 500
+
+#within wNA and AUS seperate, individuals grouped according to Admixture species
+threepop -i AUS_SE_admixture.tmix.gz  -k 500
+threepop -i wNA_SE_admixture.tmix.gz -k 500
