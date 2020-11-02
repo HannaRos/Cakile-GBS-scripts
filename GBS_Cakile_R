@@ -11,7 +11,7 @@ library(tidyverse)
 library(car)
 library(HIest)
 library(ggpubr) 
-library(diveRsity
+library(diveRsity)
 
 ############################################################################################################
 #****************************************************************************#
@@ -239,16 +239,10 @@ dev.off()
 #*********************************************#
 #*******************Newhybrids****************#
 #*********************************************#
-#change working directory
-####choose 300 fixed differences by random
-####Allfixeddiff <- read.table("484_fixed_10_3_20")
-####random_SNP <- sample_n(Allfixeddiff ,300)
-####write.table(random_SNP, "random_SNP_10_3_29.txt", append = FALSE, sep = "\t", dec = ".",
-            row.names = FALSE, col.names = FALSE, quote = FALSE)
-
-#use the 63 SNPs from HIest
-#filter vcf file so that only those SNPs are left
-#run Newhybrids outside of R in terminal
+#use the 63 SNPs which showed fixed differences between species with Admixture SE cut off
+#filter vcf file for 63 SNPS, use PGDSpider to convert and add the z option z0 for eNA and z1 EU
+#run Newhybrids outside of R in terminal and run 3 times
+newhybs -d 63SNPS_newHybrid_29_9_20_z.txt --no-gui
 
 
 ############################################################################################################
@@ -266,7 +260,7 @@ vcftools --vcf GBSCAK_9_3_20_noUN_nohet_noL.recode.vcf \
 #substitute missing data from -1 to NA
 sed 's/-1/NA/g' GBSfixed17_4_20.012 > GBSfixed17_4_20.012NA
 
-#prepare parental frequency .csv with 0.99 and 0.03 for 471 SNPs, and 0.99 and 0.06 for 471 SNPs, and 1 and 0 for 63 SNPs, run below three times for each dataset once
+#prepare parental frequency .csv with 0.99 and 0.03 for 471 SNPs, and 0.99 and 0.06 for 471 SNPs, and 1 and 0 for 63 SNPs,for each dataset
 load genotype data
 gcak<-read.csv("geno_fixed_diff.csv", 
                stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA","") )
@@ -282,7 +276,7 @@ Cak.test <- HItest(HI.class,HI, thresholds = c(2,1))
 
 table(Cak.test$c1)
 table(Cak.test$c2)
-cakmerged_9_9_20 <- data.frame(name = gcak$sample,
+cakmerged_1_10_20_099_003 <- data.frame(name = gcak$sample,
                         H = HI$H, 
                         S = HI$S, 
                         logLik = HI$logLik,  
@@ -300,131 +294,170 @@ cakmerged_9_9_20 <- data.frame(name = gcak$sample,
                         c1test = Cak.test$c1,
                         c2test = Cak.test$c2,
                         stringsAsFactors = FALSE)
-write.csv(cakmerged_9_9_20, file = "HIest9_9_20.csv", append = FALSE, quote = TRUE, sep = " ",
+write.csv(cakmerged_1_10_20_099_003, file = "HIest9_9_20.csv", append = FALSE, quote = TRUE, sep = " ",
           eol = "\n", na = "NA", dec = ".", row.names = TRUE,
           col.names = TRUE, qmethod = c("escape", "double"),
           fileEncoding = "")
 
-#plot Hiest, triangle and maps, plot 63 SNPs
+#plot Hiest, triangle and maps, plot 471 SNPs
 #make csv files with only wNA and only AUS
 #trianlge
-Triangel_AUS_2_10_20 <- read.csv("Triangle_AUS_Hiest63_2_10_20.csv", header=TRUE)
-Triangle_wNA_2_10_20 <- read.csv("Triangle_wNA_HIest_63_2_10_20.csv", header=TRUE)
-head(AUS_Triangle)
-
-pdf("Triangle_Hiest_2_10_20.pdf",useDingbats=FALSE)
-p1 <- ggplot(Triangle_wNA_2_10_20) +
-  geom_point(aes(x=S, y=H, color=factor(colour)), size=5, shape=20) +
-  scale_color_manual(values = c('#CCFF00','#0099CC','#00FF00')) +
+Triangel_wNA_14_10 <- read.csv("Triangle_wNA_14_10_20.csv", header=TRUE)
+#Triangle wNA
+pdf("Triangle_Hiest_14_10_20_noLegend_wNA.pdf",useDingbats=FALSE)
+pwNA <- ggplot(Triangel_wNA_14_10) +
+  geom_point(aes(x=S, y=H, color=factor(BestClasstoplot)), size=5, shape=20) +
+  scale_color_manual(values = c('#F4E72F','#2B4B9B','#662483')) +
   theme_classic() +
   theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  guides(color=guide_legend("colour"), fill=guide_legend("colour"))+
+  guides(color=guide_legend("BestClasstoplot"),fill=guide_legend("BestClasstoplot"))+
   scale_y_continuous(limits=c(0,1)) +
-  scale_x_continuous(limits=c(0,1))
-p2 <- ggplot(Triangel_AUS_2_10_20) +
-  geom_point(aes(x=S, y=H, color=factor(colour)), size=5, shape=20) +
-  scale_color_manual(values = c('#CCFF00','#0099CC','#00FF00','black')) +
-  theme_classic() +
-  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
-  guides(color=guide_legend("colour"),fill=guide_legend("colour"))+
-  scale_y_continuous(limits=c(0,1)) +
-  scale_x_continuous(limits=c(0,1))
-grid.arrange(p1,p2, ncol=2)
+  scale_x_continuous(limits=c(0,1))+ theme(legend.position = "none")
+grid.arrange(pwNA)
 dev.off()
 
-#plot world
-PlotHiest_NewHybrids_63 <- read.csv ("Plot_Hiest_63_1_0_NewHybrids_2_10_20.csv",header=TRUE)
+Triangel_14_10_AUS <- read.csv("Triangle14_10_AUS.csv", header=TRUE)
+#Triangle AUS
+pdf("Triangle_Hiest_14_10_20_noLegend_AUS.pdf",useDingbats=FALSE)
+pAUS <- ggplot(Triangel_14_10_AUS) +
+  geom_point(aes(x=S, y=H, color=factor(BestClasstoplot)), size=5, shape=20) +
+  scale_color_manual(values = c('#F4E72F','#2B4B9B','#662483')) +
+  theme_classic() +
+  theme(panel.border = element_rect(fill = NA, colour = "grey50")) +
+  guides(color=guide_legend("BestClasstoplot"),fill=guide_legend("BestClasstoplot"))+
+  scale_y_continuous(limits=c(0,1)) +
+  scale_x_continuous(limits=c(0,1))+ theme(legend.position = "none")
+grid.arrange(pAUS)
+dev.off()
+
+
 
 #maps for Hiest
-pdf("PlotHiest_63_2_10_20.pdf")
+Hiest471_099003 <- read.csv("Hiest_plot_triangle_map_471_099_003_14_10_20.csv", header=TRUE)
+head(Hiest471_099003)
+pdf("World_Hiest471_15_10_20.pdf")
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4), xlim=c(-155,180), ylim=c(-46,65)) #world
-for (line in (1:nrow(PlotHiest_NewHybrids_63))){
-  the_longitude <-PlotHiest_NewHybrids_63[line,"Long"] 
-  the_latitude <-PlotHiest_NewHybrids_63[line,"Lat"]
-  the_k1 <-PlotHiest_NewHybrids_63[line,"S_plot"]
-  the_k2 <-PlotHiest_NewHybrids_63[line,"X1.S_plot"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=1.8, col = c("yellow","blue"))
-}
-dev.off()
-
-pdf("westernNorthAmerica_Hiest63_2_10_20.pdf")
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(PlotHiest_NewHybrids_63))){
-  the_longitude <-PlotHiest_NewHybrids_63[line,"Longplot_H"] 
-  the_latitude <-PlotHiest_NewHybrids_63[line,"Latplot_H"]
-  the_k1 <-PlotHiest_NewHybrids_63[line,"S_plot"]
-  the_k2 <-PlotHiest_NewHybrids_63[line,"X1.S_plot"]
-  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=0.4, col = c("yellow","blue"))
+for (line in (1:nrow(Hiest471_099003))){
+  the_longitude <-Hiest471_099003[line,"Long"] 
+  the_latitude <-Hiest471_099003[line,"Lat"]
+  the_k1 <-Hiest471_099003[line,"Splot"]
+  the_k2 <-Hiest471_099003[line,"X1.Splot"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=2.5, col = c("yellow","blue"))
 }
 dev.off()
 
-pdf("AUstraliamain_Hiest63_2_10_20.pdf")
-PlotHiest_NewHybrids_63 <- read.csv ("Plot_Hiest_63_1_0_NewHybrids_2_10_20.csv",header=TRUE)
+pdf("AUstraliamain_Hiest471_15_10_20.pdf")
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(112,165),ylim=c(-40,-25))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(PlotHiest_NewHybrids_63))){
-  the_longitude <-PlotHiest_NewHybrids_63[line,"Longplot_H"] 
-  the_latitude <-PlotHiest_NewHybrids_63[line,"Latplot_H"]
-  the_k1 <-PlotHiest_NewHybrids_63[line,"S_plot"]
-  the_k2 <-PlotHiest_NewHybrids_63[line,"X1.S_plot"]
+for (line in (1:nrow(Hiest471_099003))){
+  the_longitude <-Hiest471_099003[line,"Longplot_H"] 
+  the_latitude <-Hiest471_099003[line,"Latplot_H"]
+  the_k1 <-Hiest471_099003[line,"Splot"]
+  the_k2 <-Hiest471_099003[line,"X1.Splot"]
   floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=0.4, col = c("yellow","blue"))
 }
 dev.off()
 
-pdf("TAS_Hiest63_2_10_20.pdf")
-PlotHiest_NewHybrids_63 <- read.csv ("Plot_Hiest_63_1_0_NewHybrids_2_10_20.csv",header=TRUE)
+pdf("TAS_Hiest471_15_10_20.pdf")
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-for (line in (1:nrow(PlotHiest_NewHybrids_63))){
-  the_longitude <-PlotHiest_NewHybrids_63[line,"Longplot_H"] 
-  the_latitude <-PlotHiest_NewHybrids_63[line,"Latplot_H"]
-  the_k1 <-PlotHiest_NewHybrids_63[line,"S_plot"]
-  the_k2 <-PlotHiest_NewHybrids_63[line,"X1.S_plot"]
+for (line in (1:nrow(Hiest471_099003))){
+  the_longitude <-Hiest471_099003[line,"Longplot_H"] 
+  the_latitude <-Hiest471_099003[line,"Latplot_H"]
+  the_k1 <-Hiest471_099003[line,"Splot"]
+  the_k2 <-Hiest471_099003[line,"X1.Splot"]
   floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=0.08, col = c("yellow","blue"))
 }
 dev.off()
 
-###################################################################################
-#*******************************************************************************#
-#*NewHybrid plotting*#
-#*******************************************************************************#
-#plot NewHybrids on map 63 SNPs
-NewHybrid <-read.csv("NewHybrids_63_29_9_20_plot.csv", header=TRUE)
-head(NewHybrid)
-pdf("NewHybrids_dotsNext_wNA.pdf",useDingbats=FALSE)
+pdf("westernNorthAmerica_Hiest471_15_10_20.pdf")
 map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
 map.scale(metric=TRUE,ratio=FALSE) #for km
-points(NewHybrid$Latplot_H, NewHybrid$Longplot_H,
-       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.5)
+for (line in (1:nrow(Hiest471_099003))){
+  the_longitude <-Hiest471_099003[line,"Longplot_H"] 
+  the_latitude <-Hiest471_099003[line,"Latplot_H"]
+  the_k1 <-Hiest471_099003[line,"Splot"]
+  the_k2 <-Hiest471_099003[line,"X1.Splot"]
+  floating.pie(the_longitude, the_latitude, x=c(the_k1,the_k2), radius=0.4, col = c("yellow","blue"))
+}
 dev.off()
 
-#per range next to each other
-pdf("NewHybrid_wNA_dotsnext_t.pdf",useDingbats=FALSE)
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-points(NewHybrid$Longplot_H, NewHybrid$Latplot_H,
-       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.25)
-dev.off()
+#Hiest 471 SNPs 0.99/0.06
+#for 471 with average allele frequ 
+gcak<-read.csv("geno_fixed_diff_28_9_20-484-13.csv", 
+               stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA","") )
+#load frequency data
+pcak<-read.csv("freq_fixed_diff_28_9_20_484-13_099_006.csv", 
+               stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA","") )
 
-pdf("NewHybrid_AUS_Main_dotsnext.pdf",useDingbats=FALSE)
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(112,165),ylim=c(-40,-25))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-points(NewHybrid$Longplot_H, NewHybrid$Latplot_H,
-       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.25)
-dev.off()
+HI_6 <- HIest(gcak,pcak,type="allele.count", iterations=99,surf=TRUE,startgrid=20)
+HI.class_6 <- HIclass(gcak,pcak,type="allele.count")
+Cak.test_6 <- HItest(HI.class_6,HI_6,thresholds=c(2,1))
+table(Cak.test_6$Best.class,Cak.test_6$c2)
 
-pdf("NewHybrid_TAS_dotsnext.pdf",useDingbats=FALSE)
-map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40))
-map.scale(metric=TRUE,ratio=FALSE) #for km
-points(NewHybrid$Longplot_H, NewHybrid$Latplot_H,
-       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.5)
-dev.off()
+cakmerged_1_10_20_471_099_006 <- data.frame(name = gcak$sample,
+                                          H = HI_6$H, 
+                                          S = HI_6$S, 
+                                          logLik = HI_6$logLik,  
+                                          class100 = HI.class_6$class100,  
+                                          class010 = HI.class_6$class010, 
+                                          class121 = HI.class_6$class121, 
+                                          class110 = HI.class_6$class110, 
+                                          class011 = HI.class_6$class011,  
+                                          class001 = HI.class_6$class001,  
+                                          BestClass = HI.class_6$B,  
+                                          ClassLLD = HI.class_6$LLD,
+                                          LL.Class = Cak.test_6$LLD.class,
+                                          LL.max = Cak.test_6$LL.max,
+                                          dAIC = Cak.test_6$dAIC,
+                                          c1test = Cak.test_6$c1,
+                                          c2test = Cak.test_6$c2,
+                                          stringsAsFactors = FALSE)
+write.csv(cakmerged_1_10_20_471_099_006, file = "HIest29_9_20_471_099_006.csv", append = FALSE, quote = TRUE, sep = " ",
+          eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+          col.names = TRUE, qmethod = c("escape", "double"),
+          fileEncoding = "")
+          
+#Hiest 63 SNPs 1/0
+gcak<-read.csv("geno_fixed_world63_28_9_20.csv", 
+               stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA","") )
+#load frequency data
+pcak<-read.csv("freq_fixed_diff_63_28_9_20_1_0.csv", 
+               stringsAsFactors = FALSE, strip.white = TRUE, na.strings = c("NA","") )
+
+HI_3 <- HIest(gcak,pcak,type="allele.count", iterations=99,surf=TRUE,startgrid=20)
+HI.class_3 <- HIclass(gcak,pcak,type="allele.count")
+Cak.test_3 <- HItest(HI.class_3,HI_3,thresholds=c(2,1))
+table(Cak.test_3$Best.class,Cak.test_3$c2)
+
+cakmerged_1_10_20_63_1_0 <- data.frame(name = gcak$sample,
+                                    H = HI_3$H, 
+                                    S = HI_3$S, 
+                                    logLik = HI_3$logLik,  
+                                    class100 = HI.class_3$class100,  
+                                    class010 = HI.class_3$class010, 
+                                    class121 = HI.class_3$class121, 
+                                    class110 = HI.class_3$class110, 
+                                    class011 = HI.class_3$class011,  
+                                    class001 = HI.class_3$class001,  
+                                    BestClass = HI.class_3$B,  
+                                    ClassLLD = HI.class_3$LLD,
+                                    LL.Class = Cak.test_3$LLD.class,
+                                    LL.max = Cak.test_3$LL.max,
+                                    dAIC = Cak.test_3$dAIC,
+                                    c1test = Cak.test_3$c1,
+                                    c2test = Cak.test_3$c2,
+                                    stringsAsFactors = FALSE)
+write.csv(cakmerged_1_10_20_63_1_0, file = "HIest1_10_20_63_1_0.csv", append = FALSE, quote = TRUE, sep = " ",
+          eol = "\n", na = "NA", dec = ".", row.names = TRUE,
+          col.names = TRUE, qmethod = c("escape", "double"),
+          fileEncoding = "")
+
 ###################################################################################
 #*******************************************************************************#
 #*Spearmans correlation test*#
 #*******************************************************************************#
-
 #change working directory
 #rank of sampling locations, Admixture supervised run Q values per population (global thinned dataset) and S values per population as input (Hiest)
 
@@ -440,7 +473,7 @@ wNA_MH_North<-read.csv("wNA_MH_SE_North.csv",header=TRUE)
 wNA_H_Admix<-read.csv("wNA_H_admix.csv",header=TRUE)
 
 #S-HIest
-MHE_AUS_471_63<- read.csv("Hiest_1_10_20/MHE_AUS_471_63_S.csv", header=TRUE)
+MHE_AUS_471_63<- read.csv("MHE_AUS_471_63_S.csv", header=TRUE)
 MHE_wNA_471_63<- read.csv("MHE_wNA_471_63_S.csv", header=TRUE)
 MHE_wNA_471_63_North <- read.csv("MHE_wNA_NORTH_471_63_S.csv", header=TRUE)
 MH_AUS_471<- read.csv("MH_AUS_471_S.csv", header=TRUE)
@@ -489,56 +522,91 @@ cor.test(wNA_H_Admix$k1_QE,wNA_H_Admix$rank, method=c("spearman"))
 cor.test(wNA_H_Hiest$k1_QE,wNA_H_Hiest$rank_all, method=c("spearman"))
 
 
-#plot significant values
-MHE_AUS_Admixture_SE <- ggscatter(AUS_MHE_noLHI, x = "rank", y = "k1_QE", 
-                          add = "reg.line", conf.int = TRUE, 
-                          cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
-                          xlab = "rank", ylab = "S")
-MHE_AUS_63_S <- ggscatter(MHE_AUS_471_63, x = "rank", y = "X63_S", 
-                             add = "reg.line", conf.int = TRUE, 
-                             cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
-                             xlab = "rank", ylab = "S")                         
+#plots for Hybrids, 471 SNPs 0.99/0.03
 H_AUS_Admixture_SE_Hybrid<- ggscatter(AUS_H_admix_noLHI, x = "rank", y = "k1_QE", 
+                                      add = "reg.line", conf.int = TRUE, 
+                                      cor.coef = TRUE, cor.method = "spearman",xlim=c(0,7), ylim=c(0,0.6),
+                                      xlab = "rank", ylab = "S")
+MH_H_AUS_Hiest_471_099_003<- ggscatter(MH_AUS_471, x = "rank", y = "X471_S", 
                                        add = "reg.line", conf.int = TRUE, 
-                                       cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
-                                       xlab = "rank", ylab = "S")                             
-MHE_wNA_North_Admixture_SE<- ggscatter(wNA_MHE_North, x = "rank", y = "k1_QE", 
-                                add = "reg.line", conf.int = TRUE, 
-                                cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
-                                xlab = "rank", ylab = "S")
-MHE_wNA_North_63_S <- ggscatter(MHE_wNA_471_63_North, x = "rank", y = "X63_S", 
-                          add = "reg.line", conf.int = TRUE, 
-                          cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1.5),
-                          xlab = "rank", ylab = "S")
+                                       cor.coef = TRUE, cor.method = "spearman",xlim=c(0,10), ylim=c(0,1),
+                                       xlab = "rank", ylab = "S")
 
-pdf("Spearman_5_10_20.pdf",useDingbats=FALSE)
-grid.arrange(MHE_AUS_Admixture_SE,MHE_AUS_63_S,H_AUS_Admixture_SE_Hybrid,MHE_wNA_North_Admixture_SE,MHE_wNA_North_63_S, ncol=3)
+H_wNA_Admixture_SE_Hybrid <- ggscatter(wNA_H_Admix, x = "rank", y = "k1_QE", 
+                                      add = "reg.line", conf.int = TRUE, 
+                                      cor.coef = TRUE, cor.method = "spearman",xlim=c(0,7), ylim=c(0,0.6),
+                                      xlab = "rank", ylab = "S")
+
+H_wNA_471HIest_SE_Hybrid <- ggscatter(H_wNA_471, x = "rank", y = "X471_S",
+                                      add = "reg.line", conf.int = TRUE, cor.coef = TRUE, 
+                                      cor.method = "spearman",xlim=c(0,10), ylim=c(0,1),
+                                      xlab = "rank", ylab = "S")
+
+pdf("Spearman_27_10_20_Q_hybrids.pdf")
+a <- H_AUS_Admixture_SE_Hybrid + scale_x_continuous(breaks=c(0,2,4,6,8,10))
+b <- H_wNA_Admixture_SE_Hybrid + scale_x_continuous(breaks=c(0,2,4,6,8,10))
+grid.arrange(a,b,ncol=2)
 dev.off()
 
+pdf("Spearman_27_10_20_S_hybrids.pdf")
+c <- MH_H_AUS_Hiest_471_099_003 + scale_x_continuous(breaks=c(0,2,4,6,8,10))
+d <- H_wNA_471HIest_SE_Hybrid + scale_x_continuous(breaks=c(0,2,4,6,8,10))
+grid.arrange(c,d,ncol=2)
+dev.off()
+###################################################################################
+#*******************************************************************************#
+#*NewHybrid plotting*#
+#*******************************************************************************#
+#plot NewHybrids on map 63 SNPs
+NewHybrid <-read.csv("NewHybrids_63_29_9_20_plot.csv", header=TRUE)
+head(NewHybrid)
+pdf("NewHybrids_dotsNext_wNA.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(NewHybrid$Latplot_H, NewHybrid$Longplot_H,
+       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.5)
+dev.off()
+
+#per range next to each other
+pdf("NewHybrid_wNA_dotsnext_t.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(-158,-114),ylim=c(31,61))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(NewHybrid$Longplot_H, NewHybrid$Latplot_H,
+       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.25)
+dev.off()
+
+pdf("NewHybrid_AUS_Main_dotsnext.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(112,165),ylim=c(-40,-25))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(NewHybrid$Longplot_H, NewHybrid$Latplot_H,
+       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.25)
+dev.off()
+
+pdf("NewHybrid_TAS_dotsnext.pdf",useDingbats=FALSE)
+map('mapdata::worldLores', fill = TRUE, col = "white", mar = rep(2, 4),xlim=c(142,149),ylim=c(-44,-40))
+map.scale(metric=TRUE,ratio=FALSE) #for km
+points(NewHybrid$Longplot_H, NewHybrid$Latplot_H,
+       pch=21, col="black", bg=NewHybrid$NewHybrids_63SNP, cex=1.5)
+dev.off()
 
 #################################################################################
 #*******************************************************************************#
 #***************************Q vs S**********************************************#
 #*******************************************************************************#
 #make an excelsheet per Individual Q from k1_E admixture supervised and S from HIest 
-QS <- read.csv("QvsS11_9_20.csv",header=TRUE)
+QvsS_15_10_20<- read.csv ("QvsS_471_15_10_20.csv", header=TRUE)
 head(QS)
 library(ggplot2)
 
 #plot and colour after classficaiton per program
-pdf("QS_HIest_noL.pdf",useDingbats=FALSE)
-Q2 <- ggplot(QS, aes(x=K1_E, y=S, color=NewHiest9_9)) + geom_point()+theme_classic()+ theme(legend.position="none")
-dev.off()
 
-pdf("QS_admixtureSE_noL.pdf",useDingbats=FALSE)
-Q3 <- ggplot(QS, aes(x=K1_E, y=S, color=Species_SE_admixture)) + geom_point()+theme_classic()+ theme(legend.position="none")
-dev.off()
+Q1 <-ggplot(QvsS_15_10_20, aes(x=K1_E, y=S471, color=NewHybrids_63SNP)) + geom_point()+ theme_classic()+ theme(legend.position="none")
 
-pdf("QS_NewHybrids_noL.pdf",useDingbats=FALSE)
-Q1 <-ggplot(QS, aes(x=K1_E, y=S, color=NewHybrids.Species)) + geom_point()+ theme_classic()+ theme(legend.position="none")
-dev.off()
+Q2 <- ggplot(QvsS_15_10_20, aes(x=K1_E, y=S471, color=BestClasstoplot)) + geom_point()+theme_classic()+ theme(legend.position="none")
 
-pdf("QS_all_noL.pdf",useDingbats=FALSE)
+Q3 <- ggplot(QvsS_15_10_20, aes(x=K1_E, y=S471, color=Species_SE_admixture)) + geom_point()+theme_classic()+ theme(legend.position="none")
+
+pdf("QS_all__15oct2020_noLegend.pdf",useDingbats=FALSE)
 grid.arrange(Q1,Q2,Q3,Q4, ncol=2)
 dev.off()
 
@@ -678,10 +746,7 @@ plot_tree("wNA_Home_30_9_20_M_split_m2")
 plot_tree("wNA_Home_30_9_20_M_split_m3")
 plot_tree("wNA_Home_30_9_20_M_split_m4")
 
-#run Treemix 3pop test
-threepop -i AUS_Home_30_9_20_M_split.tmix.gz -k 500
-threepop -i wNA_Home_30_9_20_M_split.tmix.gz -k 500
 
 #within wNA and AUS seperate, individuals grouped according to Admixture species
-threepop -i AUS_SE_admixture.tmix.gz  -k 500
-threepop -i wNA_SE_admixture.tmix.gz -k 500
+threepop -i AUS_SE_admixture.tmix.gz -k 1
+threepop -i wNA_SE_admixture.tmix.gz -k 1
